@@ -1,5 +1,5 @@
-module github.com/AndrewGrayYouNeeK/cloudripper
+module cloudripper
 
-require (
-    github.com/spf13/cobra v1.3.0
-)
+go 1.23
+
+require github.com/spf13/cobra v1.8.1
