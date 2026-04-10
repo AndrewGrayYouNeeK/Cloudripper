@@ -1,0 +1,10 @@
+name: cloudripper
+runtime: typescript
+description: Multi-cloud infrastructure with chaos engineering
+config:
+  awsRegion:
+    description: AWS region
+    default: us-east-1
+  gcpProject:
+    description: Google Cloud project ID
+    required: true
