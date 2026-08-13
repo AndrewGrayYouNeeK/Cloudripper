@@ -1,0 +1,18 @@
+{
+  "name": "cloudripper-infra",
+  "version": "0.1.0",
+  "description": "Cloudripper Pulumi infrastructure",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@pulumi/aws": "^6.0.0",
+    "@pulumi/gcp": "^7.0.0",
+    "@pulumi/pulumi": "^3.0.0"
+  }
+}
