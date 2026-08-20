@@ -57,20 +57,6 @@ func init() {
 	rootCmd.AddCommand(ripCmd)
 }
 
-func loadConfig() config.Config {
-	cfg := config.Load()
-	if awsRegion != "" {
-		cfg.AWSRegion = awsRegion
-	}
-	if gcpProject != "" {
-		cfg.GCPProject = gcpProject
-	}
-	if dryRun {
-		cfg.DryRun = true
-	}
-	return cfg
-}
-
 func buildProviders(cfg config.Config) []cloud.Provider {
 	var providers []cloud.Provider
 
