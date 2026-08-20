@@ -40,20 +40,13 @@ var chaosCmd = &cobra.Command{
 			return nil
 		}
 
-		action := chaosAction
-		if action == "" {
-			action = chaos.DefaultActionForKind(chaosKind)
-		}
-
-		exp := chaos.Experiment{
-			Name:     "cloudripper-" + chaosKind,
-			Kind:     chaosKind,
-			Target:   chaosTarget,
-			Duration: chaosDuration,
-			Parameters: map[string]any{
-				"action": action,
-			},
-		}
+		exp := chaos.NewExperiment(
+			"cloudripper-"+chaosKind,
+			chaosKind,
+			chaosTarget,
+			chaosDuration,
+			chaosAction,
+		)
 
 		if cfg.DryRun {
 			data, _ := json.MarshalIndent(exp, "", "  ")

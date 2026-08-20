@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -55,17 +54,4 @@ var ripCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(ripCmd)
-}
-
-func buildProviders(cfg config.Config) []cloud.Provider {
-	var providers []cloud.Provider
-
-	// Always include AWS; the SDK credential chain resolves IAM roles, SSO, etc.
-	providers = append(providers, cloud.NewAWSProvider(cfg.AWSRegion))
-
-	if cfg.GCPProject != "" {
-		providers = append(providers, cloud.NewGCPProvider(cfg.GCPProject, cfg.GCPRegion))
-	}
-
-	return providers
 }

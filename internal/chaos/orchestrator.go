@@ -115,6 +115,27 @@ func buildEndpointURL(endpoint, path, defaultScheme string) string {
 	return defaultScheme + "://" + strings.TrimSuffix(endpoint, "/") + path
 }
 
+// ResolveAction returns the chaos action to use, preferring an explicit override.
+func ResolveAction(explicitAction, kind string) string {
+	if explicitAction != "" {
+		return explicitAction
+	}
+	return DefaultActionForKind(kind)
+}
+
+// NewExperiment builds an experiment with a valid Chaos Mesh action (never the kind name).
+func NewExperiment(name, kind, target, duration, explicitAction string) Experiment {
+	return Experiment{
+		Name:     name,
+		Kind:     kind,
+		Target:   target,
+		Duration: duration,
+		Parameters: map[string]any{
+			"action": ResolveAction(explicitAction, kind),
+		},
+	}
+}
+
 // DefaultActionForKind maps Chaos Mesh kinds to their default actions.
 func DefaultActionForKind(kind string) string {
 	switch kind {
@@ -125,7 +146,7 @@ func DefaultActionForKind(kind string) string {
 	case "StressChaos":
 		return "cpu"
 	default:
-		return kind
+		return ""
 	}
 }
 
