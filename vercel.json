@@ -3,5 +3,9 @@
   "git": {
     "deploymentEnabled": false
   },
+  "github": {
+    "enabled": false,
+    "silent": true
+  },
   "ignoreCommand": "exit 0"
 }
