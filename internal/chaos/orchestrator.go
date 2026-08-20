@@ -108,11 +108,18 @@ func buildEndpointURL(endpoint, path, defaultScheme string) string {
 		return path
 	}
 
-	if strings.HasPrefix(endpoint, "http://") || strings.HasPrefix(endpoint, "https://") {
+	// Accept host-only endpoints (chaos.example.com) and full URLs (https://…).
+	if !strings.Contains(endpoint, "://") {
+		endpoint = defaultScheme + "://" + strings.TrimSuffix(endpoint, "/")
+	}
+
+	parsed, err := url.Parse(endpoint)
+	if err != nil {
 		return strings.TrimSuffix(endpoint, "/") + path
 	}
 
-	return defaultScheme + "://" + strings.TrimSuffix(endpoint, "/") + path
+	parsed.Path = strings.TrimSuffix(parsed.Path, "/") + path
+	return parsed.String()
 }
 
 // ResolveAction returns the chaos action to use, preferring an explicit override.
