@@ -92,12 +92,14 @@ func tagsToMap(tags []ec2types.Tag) map[string]string {
 	return m
 }
 
+const stoppedStorageCostFactor = 0.1 // stopped EC2 bills EBS only, ~10% of running compute
+
 func estimateEC2Cost(instanceType, status string) float64 {
 	runningCost := ec2RunningCost(instanceType)
 	switch strings.ToLower(status) {
 	case "stopped":
 		// Stopped instances bill for attached EBS storage, not compute.
-		return runningCost * 0.1
+		return runningCost * stoppedStorageCostFactor
 	case "terminated", "shutting-down":
 		return 0
 	default:
