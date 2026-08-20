@@ -1,5 +1,9 @@
 name: cloudripper
-runtime: typescript
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+main: pulumi/
 description: Multi-cloud infrastructure with chaos engineering
 config:
   awsRegion:
@@ -8,3 +12,9 @@ config:
   gcpProject:
     description: Google Cloud project ID
     required: true
+  gcpRegion:
+    description: Google Cloud region
+    default: us-central1
+  clusterName:
+    description: Cluster name prefix
+    default: cloudripper

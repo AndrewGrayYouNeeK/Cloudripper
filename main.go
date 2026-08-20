@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cmd"
+	"github.com/AndrewGrayYouNeeK/cloudripper/cmd"
 )
 
 func main() {
