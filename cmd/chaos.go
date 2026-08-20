@@ -13,6 +13,7 @@ var (
 	chaosTarget   string
 	chaosDuration string
 	chaosKind     string
+	chaosAction   string
 )
 
 var chaosCmd = &cobra.Command{
@@ -39,17 +40,22 @@ var chaosCmd = &cobra.Command{
 			return nil
 		}
 
+		action := chaosAction
+		if action == "" {
+			action = chaos.DefaultActionForKind(chaosKind)
+		}
+
 		exp := chaos.Experiment{
 			Name:     "cloudripper-" + chaosKind,
 			Kind:     chaosKind,
 			Target:   chaosTarget,
 			Duration: chaosDuration,
 			Parameters: map[string]any{
-				"action": chaosKind,
+				"action": action,
 			},
 		}
 
-		if dryRun {
+		if cfg.DryRun {
 			data, _ := json.MarshalIndent(exp, "", "  ")
 			fmt.Printf("Dry-run — would inject experiment:\n%s\n", data)
 			return nil
@@ -70,5 +76,6 @@ func init() {
 	chaosCmd.Flags().StringVar(&chaosTarget, "target", "cloudripper", "target application label")
 	chaosCmd.Flags().StringVar(&chaosDuration, "duration", "30s", "experiment duration")
 	chaosCmd.Flags().StringVar(&chaosKind, "kind", "PodChaos", "chaos experiment kind")
+	chaosCmd.Flags().StringVar(&chaosAction, "action", "", "chaos action (defaults based on kind, e.g. pod-kill)")
 	rootCmd.AddCommand(chaosCmd)
 }

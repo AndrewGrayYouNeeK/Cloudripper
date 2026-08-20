@@ -14,7 +14,7 @@ func TestAnalyzeStoppedInstance(t *testing.T) {
 			Provider: "aws",
 			Type:     cloud.ResourceEC2,
 			Status:   "stopped",
-			CostUSD:  70.0,
+			CostUSD:  7.0,
 		},
 	}
 

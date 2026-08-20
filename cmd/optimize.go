@@ -31,7 +31,7 @@ var optimizeCmd = &cobra.Command{
 		result := optimizer.Analyze(resources)
 		fmt.Print(optimizer.FormatReport(result))
 
-		if dryRun {
+		if cfg.DryRun {
 			fmt.Println("\n(dry-run mode — no changes applied)")
 		}
 		return nil

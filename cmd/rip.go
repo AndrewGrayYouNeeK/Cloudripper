@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
 	"github.com/AndrewGrayYouNeeK/cloudripper/internal/config"
@@ -47,7 +46,7 @@ var ripCmd = &cobra.Command{
 		}
 		fmt.Printf("\nEstimated monthly spend: $%.2f\n", totalCost)
 
-		if dryRun {
+		if cfg.DryRun {
 			fmt.Println("\n(dry-run mode — no changes made)")
 		}
 		return nil
@@ -66,32 +65,21 @@ func loadConfig() config.Config {
 	if gcpProject != "" {
 		cfg.GCPProject = gcpProject
 	}
-	cfg.DryRun = dryRun
+	if dryRun {
+		cfg.DryRun = true
+	}
 	return cfg
 }
 
 func buildProviders(cfg config.Config) []cloud.Provider {
 	var providers []cloud.Provider
 
-	if hasAWSCredentials() {
-		providers = append(providers, cloud.NewAWSProvider(cfg.AWSRegion))
-	}
+	// Always include AWS; the SDK credential chain resolves IAM roles, SSO, etc.
+	providers = append(providers, cloud.NewAWSProvider(cfg.AWSRegion))
+
 	if cfg.GCPProject != "" {
 		providers = append(providers, cloud.NewGCPProvider(cfg.GCPProject, cfg.GCPRegion))
 	}
 
 	return providers
-}
-
-func hasAWSCredentials() bool {
-	if os.Getenv("AWS_ACCESS_KEY_ID") != "" {
-		return true
-	}
-	if os.Getenv("AWS_PROFILE") != "" {
-		return true
-	}
-	if _, err := os.Stat(os.Getenv("HOME") + "/.aws/credentials"); err == nil {
-		return true
-	}
-	return false
 }

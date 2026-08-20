@@ -3,6 +3,7 @@ package cloud
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
@@ -39,14 +40,15 @@ func (a *AWSProvider) Scan(ctx context.Context) ([]Resource, error) {
 	for _, reservation := range instances.Reservations {
 		for _, inst := range reservation.Instances {
 			name := instanceName(inst.Tags)
+			status := string(inst.State.Name)
 			resources = append(resources, Resource{
 				ID:       aws.ToString(inst.InstanceId),
 				Name:     name,
 				Provider: "aws",
 				Type:     ResourceEC2,
 				Region:   a.region,
-				Status:   string(inst.State.Name),
-				CostUSD:  estimateEC2Cost(string(inst.InstanceType)),
+				Status:   status,
+				CostUSD:  estimateEC2Cost(string(inst.InstanceType), status),
 				Tags:     tagsToMap(inst.Tags),
 			})
 		}
@@ -90,7 +92,20 @@ func tagsToMap(tags []ec2types.Tag) map[string]string {
 	return m
 }
 
-func estimateEC2Cost(instanceType string) float64 {
+func estimateEC2Cost(instanceType, status string) float64 {
+	runningCost := ec2RunningCost(instanceType)
+	switch strings.ToLower(status) {
+	case "stopped":
+		// Stopped instances bill for attached EBS storage, not compute.
+		return runningCost * 0.1
+	case "terminated", "shutting-down":
+		return 0
+	default:
+		return runningCost
+	}
+}
+
+func ec2RunningCost(instanceType string) float64 {
 	estimates := map[string]float64{
 		"t3.micro":   7.5,
 		"t3.small":   15.0,

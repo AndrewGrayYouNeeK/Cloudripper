@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -81,7 +83,7 @@ func (o *Orchestrator) injectChaosMesh(ctx context.Context, exp Experiment) (map
 			"parameters": exp.Parameters,
 		},
 	}
-	return o.post(ctx, "http://"+o.config.Endpoint+"/api/v1/experiments", payload, nil)
+	return o.post(ctx, buildEndpointURL(o.config.Endpoint, "/api/v1/experiments", "http"), payload, nil)
 }
 
 func (o *Orchestrator) injectGremlin(ctx context.Context, exp Experiment) (map[string]any, error) {
@@ -97,16 +99,47 @@ func (o *Orchestrator) injectGremlin(ctx context.Context, exp Experiment) (map[s
 	headers := map[string]string{
 		"Authorization": "Bearer " + o.config.APIKey,
 	}
-	return o.post(ctx, "https://"+o.config.Endpoint+"/v1/attacks", payload, headers)
+	return o.post(ctx, buildEndpointURL(o.config.Endpoint, "/v1/attacks", "https"), payload, headers)
 }
 
-func (o *Orchestrator) post(ctx context.Context, url string, payload map[string]any, headers map[string]string) (map[string]any, error) {
+func buildEndpointURL(endpoint, path, defaultScheme string) string {
+	endpoint = strings.TrimSpace(endpoint)
+	if endpoint == "" {
+		return path
+	}
+
+	if strings.HasPrefix(endpoint, "http://") || strings.HasPrefix(endpoint, "https://") {
+		return strings.TrimSuffix(endpoint, "/") + path
+	}
+
+	return defaultScheme + "://" + strings.TrimSuffix(endpoint, "/") + path
+}
+
+// DefaultActionForKind maps Chaos Mesh kinds to their default actions.
+func DefaultActionForKind(kind string) string {
+	switch kind {
+	case "PodChaos":
+		return "pod-kill"
+	case "NetworkChaos":
+		return "delay"
+	case "StressChaos":
+		return "cpu"
+	default:
+		return kind
+	}
+}
+
+func (o *Orchestrator) post(ctx context.Context, rawURL string, payload map[string]any, headers map[string]string) (map[string]any, error) {
+	if _, err := url.Parse(rawURL); err != nil {
+		return nil, fmt.Errorf("invalid chaos endpoint URL: %w", err)
+	}
+
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, rawURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}

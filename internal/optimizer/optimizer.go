@@ -54,13 +54,21 @@ func Analyze(resources []cloud.Resource) Result {
 func analyzeResource(r cloud.Resource) (Recommendation, bool) {
 	status := strings.ToLower(r.Status)
 
-	if status == "stopped" || status == "terminated" {
+	if status == "stopped" {
+		// Stopped EC2 only incurs storage costs; recommend cleanup if material.
+		if r.CostUSD < 1 {
+			return Recommendation{}, false
+		}
 		return Recommendation{
 			Resource: r,
 			Action:   ActionTerminate,
 			Savings:  r.CostUSD,
-			Reason:   "resource is stopped but still incurring storage/network costs",
+			Reason:   "stopped instance still incurring attached storage costs",
 		}, true
+	}
+
+	if status == "terminated" {
+		return Recommendation{}, false
 	}
 
 	if r.CostUSD >= 100 {
