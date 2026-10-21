@@ -83,7 +83,7 @@ func (o *Orchestrator) injectChaosMesh(ctx context.Context, exp Experiment) (map
 			"parameters": exp.Parameters,
 		},
 	}
-	return o.post(ctx, buildEndpointURL(o.config.Endpoint, "/api/v1/experiments", "http"), payload, nil)
+	return o.do(ctx, http.MethodPost, buildEndpointURL(o.config.Endpoint, "/api/v1/experiments", "http"), payload, o.authHeaders())
 }
 
 func (o *Orchestrator) injectGremlin(ctx context.Context, exp Experiment) (map[string]any, error) {
@@ -96,10 +96,7 @@ func (o *Orchestrator) injectGremlin(ctx context.Context, exp Experiment) (map[s
 			"parameters": exp.Parameters,
 		},
 	}
-	headers := map[string]string{
-		"Authorization": "Bearer " + o.config.APIKey,
-	}
-	return o.post(ctx, buildEndpointURL(o.config.Endpoint, "/v1/attacks", "https"), payload, headers)
+	return o.do(ctx, http.MethodPost, buildEndpointURL(o.config.Endpoint, "/v1/attacks", "https"), payload, o.authHeaders())
 }
 
 func buildEndpointURL(endpoint, path, defaultScheme string) string {
@@ -157,21 +154,29 @@ func DefaultActionForKind(kind string) string {
 	}
 }
 
-func (o *Orchestrator) post(ctx context.Context, rawURL string, payload map[string]any, headers map[string]string) (map[string]any, error) {
+func (o *Orchestrator) do(ctx context.Context, method, rawURL string, payload map[string]any, headers map[string]string) (map[string]any, error) {
 	if _, err := url.Parse(rawURL); err != nil {
 		return nil, fmt.Errorf("invalid chaos endpoint URL: %w", err)
 	}
 
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
+	var bodyReader *bytes.Reader
+	if payload != nil {
+		body, err := json.Marshal(payload)
+		if err != nil {
+			return nil, err
+		}
+		bodyReader = bytes.NewReader(body)
+	} else {
+		bodyReader = bytes.NewReader(nil)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, rawURL, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, method, rawURL, bodyReader)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/json")
+	if payload != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}

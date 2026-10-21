@@ -1,8 +1,13 @@
 package cmd
 
 import (
+	"bytes"
+	"io"
 	"os"
 	"testing"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func TestLoadConfigPreservesDryRunEnv(t *testing.T) {
@@ -48,14 +53,28 @@ func mustParseFlags(t *testing.T, args []string) {
 func resetCmdFlags(t *testing.T) {
 	t.Helper()
 	rootCmd.SetArgs(nil)
-	dryRun = false
-	awsRegion = ""
-	gcpProject = ""
-	for _, name := range []string{"dry-run", "aws-region", "gcp-project"} {
-		if f := rootCmd.PersistentFlags().Lookup(name); f != nil {
-			_ = f.Value.Set(f.DefValue)
-			f.Changed = false
+	rootCmd.SetOut(io.Discard)
+	rootCmd.SetErr(io.Discard)
+	rootCmd.SetIn(bytes.NewReader(nil))
+	var walk func(*cobra.Command)
+	walk = func(cmd *cobra.Command) {
+		resetFlagSet(t, cmd.Flags())
+		resetFlagSet(t, cmd.PersistentFlags())
+		for _, child := range cmd.Commands() {
+			walk(child)
 		}
 	}
+	walk(rootCmd)
 	os.Unsetenv("DRY_RUN")
+	os.Unsetenv("CLOUDRIPPER_OUTPUT")
+}
+
+func resetFlagSet(t *testing.T, set *pflag.FlagSet) {
+	t.Helper()
+	set.VisitAll(func(f *pflag.Flag) {
+		if err := f.Value.Set(f.DefValue); err != nil {
+			t.Fatalf("reset flag %s: %v", f.Name, err)
+		}
+		f.Changed = false
+	})
 }
