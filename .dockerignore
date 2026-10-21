@@ -1,0 +1,9 @@
+.git
+.github
+bin
+cloudripper
+cloudripper-audit.log
+.cloudripper
+pulumi/node_modules
+infrastructure/.terraform
+**/*_test.go
