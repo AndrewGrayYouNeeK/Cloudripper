@@ -3,134 +3,110 @@ package cloud
 import (
 	"context"
 	"fmt"
-	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/eks"
+	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
+	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-// AWSProvider scans AWS resources.
+// AWSProvider scans and mutates AWS resources in one region.
 type AWSProvider struct {
-	region string
+	region  string
+	clients AWSClients
+	load    func(ctx context.Context, region string) (AWSClients, error)
+
+	mu      sync.Mutex
+	loaded  bool
+	loadErr error
 }
 
-// NewAWSProvider creates an AWS scanner for the given region.
+// NewAWSProvider creates an AWS provider that loads the default credential chain on first use.
 func NewAWSProvider(region string) *AWSProvider {
-	return &AWSProvider{region: region}
+	return &AWSProvider{region: region, load: loadAWSClients}
 }
 
+// NewAWSProviderWithClients creates a provider backed by the given clients (tests).
+func NewAWSProviderWithClients(region string, clients AWSClients) *AWSProvider {
+	return &AWSProvider{region: region, clients: clients, loaded: true}
+}
+
+// Name implements Provider.
 func (a *AWSProvider) Name() string { return "aws" }
 
+// Provider implements Executor.
+func (a *AWSProvider) Provider() string { return "aws" }
+
+// Scan implements Provider.
 func (a *AWSProvider) Scan(ctx context.Context) ([]Resource, error) {
-	cfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(a.region))
+	if err := a.ensure(ctx); err != nil {
+		return nil, err
+	}
+	return scanAWS(ctx, a.region, a.clients)
+}
+
+// Execute implements Executor.
+func (a *AWSProvider) Execute(ctx context.Context, r Resource, action, spec string) (string, error) {
+	if IsProtected(r.Tags) {
+		return "", fmt.Errorf("refusing to change protected resource %s", r.ID)
+	}
+	if err := a.ensure(ctx); err != nil {
+		return "", err
+	}
+	return executeAWS(ctx, a.clients, r, action, spec)
+}
+
+func (a *AWSProvider) ensure(ctx context.Context) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.loaded {
+		return a.loadErr
+	}
+	if a.load == nil {
+		a.loaded = true
+		a.loadErr = fmt.Errorf("aws clients not configured")
+		return a.loadErr
+	}
+	clients, err := a.load(ctx, a.region)
+	a.loaded = true
 	if err != nil {
-		return nil, fmt.Errorf("aws config: %w", err)
+		a.loadErr = fmt.Errorf("aws config: %w", err)
+		return a.loadErr
 	}
+	a.clients = clients
+	return nil
+}
 
-	var resources []Resource
-
-	ec2Client := ec2.NewFromConfig(cfg)
-	instances, err := ec2Client.DescribeInstances(ctx, &ec2.DescribeInstancesInput{})
+func loadAWSClients(ctx context.Context, region string) (AWSClients, error) {
+	cfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(region))
 	if err != nil {
-		return nil, fmt.Errorf("aws ec2 scan: %w", err)
+		return AWSClients{}, err
 	}
-	for _, reservation := range instances.Reservations {
-		for _, inst := range reservation.Instances {
-			name := instanceName(inst.Tags)
-			status := string(inst.State.Name)
-			resources = append(resources, Resource{
-				ID:       aws.ToString(inst.InstanceId),
-				Name:     name,
-				Provider: "aws",
-				Type:     ResourceEC2,
-				Region:   a.region,
-				Status:   status,
-				CostUSD:  estimateEC2Cost(string(inst.InstanceType), status),
-				Tags:     tagsToMap(inst.Tags),
-			})
-		}
-	}
-
-	rdsClient := rds.NewFromConfig(cfg)
-	dbs, err := rdsClient.DescribeDBInstances(ctx, &rds.DescribeDBInstancesInput{})
-	if err != nil {
-		return nil, fmt.Errorf("aws rds scan: %w", err)
-	}
-	for _, db := range dbs.DBInstances {
-		resources = append(resources, Resource{
-			ID:       aws.ToString(db.DBInstanceIdentifier),
-			Name:     aws.ToString(db.DBInstanceIdentifier),
-			Provider: "aws",
-			Type:     ResourceRDS,
-			Region:   a.region,
-			Status:   aws.ToString(db.DBInstanceStatus),
-			CostUSD:  estimateRDSCost(aws.ToString(db.DBInstanceClass)),
-			Tags:     map[string]string{},
-		})
-	}
-
-	return resources, nil
+	return AWSClients{
+		EC2:    ec2.NewFromConfig(cfg),
+		RDS:    rds.NewFromConfig(cfg),
+		S3:     s3.NewFromConfig(cfg),
+		ELB:    elasticloadbalancingv2.NewFromConfig(cfg),
+		Lambda: lambda.NewFromConfig(cfg),
+		EKS:    eks.NewFromConfig(cfg),
+		ASG:    autoscaling.NewFromConfig(cfg),
+	}, nil
 }
 
-func instanceName(tags []ec2types.Tag) string {
-	for _, t := range tags {
-		if aws.ToString(t.Key) == "Name" {
-			return aws.ToString(t.Value)
-		}
-	}
-	return ""
+// Clients returns the loaded clients after ensure. Scale and cost adapters use this
+// only through their own constructors; tests use NewAWSProviderWithClients.
+func (a *AWSProvider) Clients() AWSClients {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.clients
 }
 
-func tagsToMap(tags []ec2types.Tag) map[string]string {
-	m := make(map[string]string, len(tags))
-	for _, t := range tags {
-		m[aws.ToString(t.Key)] = aws.ToString(t.Value)
-	}
-	return m
-}
-
-const stoppedStorageCostFactor = 0.1 // stopped EC2 bills EBS only, ~10% of running compute
-
-func estimateEC2Cost(instanceType, status string) float64 {
-	runningCost := ec2RunningCost(instanceType)
-	switch strings.ToLower(status) {
-	case "stopped":
-		// Stopped instances bill for attached EBS storage, not compute.
-		return runningCost * stoppedStorageCostFactor
-	case "terminated", "shutting-down":
-		return 0
-	default:
-		return runningCost
-	}
-}
-
-func ec2RunningCost(instanceType string) float64 {
-	estimates := map[string]float64{
-		"t3.micro":   7.5,
-		"t3.small":   15.0,
-		"t3.medium":  30.0,
-		"m5.large":   70.0,
-		"m5.xlarge":  140.0,
-		"c5.2xlarge": 248.0,
-	}
-	if cost, ok := estimates[instanceType]; ok {
-		return cost
-	}
-	return 50.0
-}
-
-func estimateRDSCost(instanceClass string) float64 {
-	estimates := map[string]float64{
-		"db.t3.micro":  12.0,
-		"db.t3.small":  24.0,
-		"db.t3.medium": 48.0,
-		"db.m5.large":  120.0,
-	}
-	if cost, ok := estimates[instanceClass]; ok {
-		return cost
-	}
-	return 80.0
+func awsString(v *string) string {
+	return aws.ToString(v)
 }
