@@ -1,4 +1,6 @@
 cloudripper
+cloudripper-audit.log
+.cloudripper/
 bin/
 pulumi/node_modules/
 pulumi/bin/

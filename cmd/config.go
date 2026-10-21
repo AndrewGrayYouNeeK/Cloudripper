@@ -13,6 +13,18 @@ func loadConfig() config.Config {
 	if gcpProject != "" {
 		cfg.GCPProject = gcpProject
 	}
+	if gcpRegionFlag != "" {
+		cfg.GCPRegion = gcpRegionFlag
+	}
+	if azureSubscription != "" {
+		cfg.AzureSubscription = azureSubscription
+	}
+	if azureResourceGroup != "" {
+		cfg.AzureResourceGroup = azureResourceGroup
+	}
+	if auditLog != "" {
+		cfg.AuditLog = auditLog
+	}
 	// Only override env DRY_RUN when the flag was explicitly set.
 	if rootCmd.PersistentFlags().Changed("dry-run") {
 		cfg.DryRun = dryRun
@@ -28,6 +40,9 @@ func buildProviders(cfg config.Config) []cloud.Provider {
 
 	if cfg.GCPProject != "" {
 		providers = append(providers, cloud.NewGCPProvider(cfg.GCPProject, cfg.GCPRegion))
+	}
+	if cfg.AzureSubscription != "" {
+		providers = append(providers, cloud.NewAzureProvider(cfg.AzureSubscription, cfg.AzureResourceGroup))
 	}
 
 	return providers
