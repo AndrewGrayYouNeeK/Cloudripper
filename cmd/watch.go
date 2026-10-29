@@ -60,7 +60,7 @@ func (m *memoryCollector) Collect(ctx context.Context) (watch.Snapshot, error) {
 	snap, resources, err := collectWithResources(ctx, m.cfg)
 	m.resources = resources
 	if err != nil && len(resources) > 0 {
-		fmt.Fprintf(m.err, "warning: %v\n", err)
+		writeScanProblems(m.err, err)
 		return snap, nil
 	}
 	return snap, err
@@ -77,6 +77,7 @@ func runWatch(cmd *cobra.Command, _ []string) error {
 	if watchFlags.enforce && !cfg.DryRun && !yes {
 		return fmt.Errorf("refusing to enforce schedules without --yes (or set --dry-run to preview)")
 	}
+	writeSkips(cmd.ErrOrStderr(), cfg)
 	collector := &memoryCollector{cfg: cfg, err: cmd.ErrOrStderr()}
 	opts := watch.Options{
 		Interval:  cfg.WatchInterval,

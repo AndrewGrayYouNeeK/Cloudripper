@@ -9,6 +9,7 @@ import (
 // Config holds runtime settings for Cloudripper.
 type Config struct {
 	AWSRegion          string
+	AllRegions         bool
 	GCPProject         string
 	GCPRegion          string
 	GCPBillingTable    string

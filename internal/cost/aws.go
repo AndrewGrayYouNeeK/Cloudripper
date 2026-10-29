@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
@@ -51,7 +52,7 @@ func (a *AWSExplorer) Fetch(ctx context.Context) (Snapshot, error) {
 	snap := Snapshot{Source: cloud.CostSourceAWS}
 	services, err := a.API.GetCostAndUsage(ctx, usageInput(a.Region, start, end, "SERVICE"))
 	if err != nil {
-		return Snapshot{}, err
+		return Snapshot{}, fmt.Errorf("%s", FormatCostExplorerError(err))
 	}
 	svcCosts, total, warnings := totalsFromResults(services.ResultsByTime)
 	snap.Services = svcCosts
@@ -69,7 +70,11 @@ func (a *AWSExplorer) Fetch(ctx context.Context) (Snapshot, error) {
 		Filter: regionFilter(a.Region),
 	})
 	if err != nil {
-		snap.Warnings = append(snap.Warnings, "resource-level cost explorer data unavailable: "+err.Error())
+		if costExplorerDisabled(err.Error()) {
+			snap.Warnings = append(snap.Warnings, FormatCostExplorerError(err))
+		} else {
+			snap.Warnings = append(snap.Warnings, "resource-level cost explorer data unavailable: "+err.Error())
+		}
 		return snap, nil
 	}
 	for _, period := range resources.ResultsByTime {
@@ -159,4 +164,20 @@ func metricAmount(metrics map[string]cetypes.MetricValue) (string, string) {
 // ParseAmount is exported for tests that already hold a raw string.
 func ParseAmount(amount string) (float64, error) {
 	return strconv.ParseFloat(amount, 64)
+}
+
+// FormatCostExplorerError replaces the raw "not enabled for Cost Explorer"
+// API error with setup guidance. Other errors are returned unchanged.
+func FormatCostExplorerError(err error) string {
+	if err == nil {
+		return ""
+	}
+	if costExplorerDisabled(err.Error()) {
+		return "Cost Explorer is not enabled for this account. Enable it in the AWS Billing console; cost data usually appears after about 24 hours."
+	}
+	return err.Error()
+}
+
+func costExplorerDisabled(msg string) bool {
+	return strings.Contains(strings.ToLower(msg), "not enabled for cost explorer")
 }

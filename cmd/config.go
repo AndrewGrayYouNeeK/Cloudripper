@@ -10,6 +10,9 @@ func loadConfig() config.Config {
 	if awsRegion != "" {
 		cfg.AWSRegion = awsRegion
 	}
+	if rootCmd.PersistentFlags().Changed("all-regions") {
+		cfg.AllRegions = allRegions
+	}
 	if gcpProject != "" {
 		cfg.GCPProject = gcpProject
 	}
@@ -36,7 +39,9 @@ func buildProviders(cfg config.Config) []cloud.Provider {
 	var providers []cloud.Provider
 
 	// Always include AWS; the SDK credential chain resolves IAM roles, SSO, etc.
-	providers = append(providers, cloud.NewAWSProvider(cfg.AWSRegion))
+	awsProvider := cloud.NewAWSProvider(cfg.AWSRegion)
+	awsProvider.SetAllRegions(cfg.AllRegions)
+	providers = append(providers, awsProvider)
 
 	if cfg.GCPProject != "" {
 		providers = append(providers, cloud.NewGCPProvider(cfg.GCPProject, cfg.GCPRegion))

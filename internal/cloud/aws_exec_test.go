@@ -18,6 +18,7 @@ type fakeEC2 struct {
 	modifyErr error
 	released  string
 	deleted   string
+	regions   []ec2types.Region
 }
 
 func (f *fakeEC2) DescribeInstances(context.Context, *ec2.DescribeInstancesInput, ...func(*ec2.Options)) (*ec2.DescribeInstancesOutput, error) {
@@ -81,6 +82,10 @@ func (f *fakeEC2) DeleteVolume(_ context.Context, params *ec2.DeleteVolumeInput,
 func (f *fakeEC2) ReleaseAddress(_ context.Context, params *ec2.ReleaseAddressInput, _ ...func(*ec2.Options)) (*ec2.ReleaseAddressOutput, error) {
 	f.released = aws.ToString(params.AllocationId)
 	return &ec2.ReleaseAddressOutput{}, nil
+}
+
+func (f *fakeEC2) DescribeRegions(context.Context, *ec2.DescribeRegionsInput, ...func(*ec2.Options)) (*ec2.DescribeRegionsOutput, error) {
+	return &ec2.DescribeRegionsOutput{Regions: f.regions}, nil
 }
 
 func joined(calls []string) string { return strings.Join(calls, ",") }

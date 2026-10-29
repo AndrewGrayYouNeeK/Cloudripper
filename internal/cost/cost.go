@@ -60,14 +60,16 @@ func Resolve(ctx context.Context, resources []cloud.Resource, sources []Source) 
 		}
 		snap, err := src.Fetch(ctx)
 		if err != nil {
-			res.Warnings = append(res.Warnings, fmt.Sprintf("%s: %v", src.Name(), err))
+			res.Warnings = appendWarning(res.Warnings, fmt.Sprintf("%s: %v", src.Name(), err))
 			continue
 		}
 		if snap.Source == "" {
 			snap.Source = src.Name()
 		}
 		res.Snapshots = append(res.Snapshots, snap)
-		res.Warnings = append(res.Warnings, snap.Warnings...)
+		for _, warning := range snap.Warnings {
+			res.Warnings = appendWarning(res.Warnings, warning)
+		}
 		res.ActualTotal += snap.TotalUSD
 		res.ActualAvailable = true
 		applySnapshot(&res, snap)
@@ -144,10 +146,20 @@ func Summary(res Resolution) string {
 			b.WriteString("\n")
 		}
 	}
-	for _, w := range res.Warnings {
-		fmt.Fprintf(&b, "warning: %s\n", w)
-	}
 	return b.String()
+}
+
+func appendWarning(dst []string, warning string) []string {
+	warning = strings.TrimSpace(warning)
+	if warning == "" {
+		return dst
+	}
+	for _, existing := range dst {
+		if existing == warning {
+			return dst
+		}
+	}
+	return append(dst, warning)
 }
 
 // Window is the trailing 30 days ending today (end exclusive, date precision).
