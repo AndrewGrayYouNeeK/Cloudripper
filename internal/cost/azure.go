@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/costmanagement/armcostmanagement"

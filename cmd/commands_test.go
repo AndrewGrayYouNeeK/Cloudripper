@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/config"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cost"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/scale"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cost"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/scale"
 )
 
 type recordingExec struct {

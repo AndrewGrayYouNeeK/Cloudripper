@@ -3,7 +3,7 @@ package optimizer
 import (
 	"testing"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 )
 
 func TestAnalyzeStoppedInstance(t *testing.T) {

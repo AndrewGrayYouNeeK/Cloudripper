@@ -6,13 +6,13 @@ import (
 	"io"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/apply"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/config"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cost"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/notify"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/optimizer"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/watch"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/apply"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cost"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/notify"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/optimizer"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/watch"
 	"github.com/spf13/cobra"
 )
 

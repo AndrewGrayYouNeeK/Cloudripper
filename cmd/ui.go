@@ -7,12 +7,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/apply"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/audit"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/config"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cost"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/output"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/apply"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/audit"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cost"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/output"
 	"github.com/spf13/cobra"
 )
 

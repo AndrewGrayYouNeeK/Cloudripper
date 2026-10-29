@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/monitoring/v3"
 	"google.golang.org/api/option"

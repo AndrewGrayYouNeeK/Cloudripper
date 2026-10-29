@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/schedule"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/schedule"
 )
 
 func executeAzure(ctx context.Context, api AzureActions, r Resource, action, spec string) (string, error) {

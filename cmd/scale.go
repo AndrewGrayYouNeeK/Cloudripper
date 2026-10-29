@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/output"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/scale"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/output"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/scale"
 	"github.com/spf13/cobra"
 )
 

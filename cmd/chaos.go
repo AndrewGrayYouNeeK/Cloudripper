@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/audit"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/chaos"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/audit"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/chaos"
 	"github.com/spf13/cobra"
 )
 

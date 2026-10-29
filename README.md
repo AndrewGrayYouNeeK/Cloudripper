@@ -1,6 +1,10 @@
 # CloudRipper
 
-CloudRipper is a Go CLI for AWS, GCP, and Azure. It inventories resources, reads actual trailing spend when billing APIs are available, applies cost actions you confirm, scales instance groups from CPU, watches for cost spikes, and posts chaos experiments inside a blast-radius limit.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+One CLI for cloud waste, real spend, and safe chaos tests, across AWS, GCP, and Azure.
+
+It inventories resources, reads actual trailing spend when billing APIs are available, applies cost actions you confirm, scales instance groups from CPU, watches for cost spikes, and posts chaos experiments inside a blast-radius limit.
 
 Pricing heuristics fill in when a billing API is missing or denies the call. Estimates and actuals are reported separately because they measure different things: an estimate is a monthly price guess for one resource, and an actual is account spend over the last 30 days.
 
@@ -178,7 +182,7 @@ AWS uses the standard SDK credential chain. GCP uses application default credent
 ## Install
 
 ```bash
-go install github.com/AndrewGrayYouNeeK/cloudripper@latest
+go install github.com/AndrewGrayYouNeeK/Cloudripper/...@latest
 ```
 
 From source:
@@ -235,3 +239,7 @@ internal/notify/      Slack, email, stdout
 infrastructure/       Sample Terraform stack
 pulumi/               Sample Pulumi program
 ```
+
+## License
+
+[MIT](LICENSE). Copyright 2026 Andrew Gray.

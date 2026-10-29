@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/audit"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/audit"
 )
 
 // Controller discovers scalable targets and applies a decision.

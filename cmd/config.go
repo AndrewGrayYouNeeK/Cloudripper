@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/config"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
 )
 
 func loadConfig() config.Config {

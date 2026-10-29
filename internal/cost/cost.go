@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 )
 
 // ServiceCost is account spend for one cloud service over the query window.

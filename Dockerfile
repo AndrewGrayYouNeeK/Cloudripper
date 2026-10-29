@@ -8,6 +8,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/cloudripper .
 
 FROM gcr.io/distroless/static-debian12:nonroot
+LABEL org.opencontainers.image.licenses="MIT"
 COPY --from=build /out/cloudripper /cloudripper
 USER nonroot:nonroot
 ENTRYPOINT ["/cloudripper"]

@@ -8,10 +8,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/audit"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/iac"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/optimizer"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/audit"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/iac"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/optimizer"
 )
 
 const (

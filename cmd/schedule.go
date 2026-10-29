@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/optimizer"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/output"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/optimizer"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/output"
 	"github.com/spf13/cobra"
 )
 

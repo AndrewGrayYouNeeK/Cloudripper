@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/apply"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/config"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/iac"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/optimizer"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/output"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/apply"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/iac"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/optimizer"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/output"
 	"github.com/spf13/cobra"
 )
 
