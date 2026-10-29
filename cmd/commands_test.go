@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -230,6 +231,78 @@ func TestChaosDryRunRejectsProduction(t *testing.T) {
 	_, _, err := runCLI(t, "--dry-run", "chaos", "--target", "prod-api", "--duration", "30s")
 	if err == nil || !strings.Contains(err.Error(), "production") {
 		t.Fatalf("expected production rejection, got %v", err)
+	}
+}
+
+func TestCostWarningPrintsOnce(t *testing.T) {
+	prev := rt
+	t.Cleanup(func() { rt = prev })
+	warning := "Cost Explorer is not enabled for this account. Enable it in the AWS Billing console; cost data usually appears after about 24 hours."
+	rt = runtime{
+		scan: func(context.Context, config.Config) ([]cloud.Resource, error) {
+			return []cloud.Resource{{ID: "i-1", Provider: "aws", Type: cloud.ResourceEC2, Status: "running", CostUSD: 1}}, nil
+		},
+		costs: func(context.Context, config.Config, []cloud.Resource) (cost.Resolution, error) {
+			return cost.Resolution{
+				Resources:      []cloud.Resource{{ID: "i-1", Provider: "aws", Type: cloud.ResourceEC2, CostUSD: 1}},
+				EstimatedTotal: 1,
+				Warnings:       []string{warning},
+			}, nil
+		},
+		executors: func(context.Context, config.Config) ([]cloud.Executor, error) { return nil, nil },
+		scalers:   func(context.Context, config.Config) ([]scale.Controller, error) { return nil, nil },
+	}
+	for _, command := range []string{"rip", "cost"} {
+		out, stderr, err := runCLI(t, command)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Count(out+stderr, warning) != 1 || strings.Count(out, warning) != 0 {
+			t.Fatalf("%s printed the warning %d times\nstdout:\n%s\nstderr:\n%s", command, strings.Count(out+stderr, warning), out, stderr)
+		}
+	}
+}
+
+func TestUnconfiguredCloudsAreSkipped(t *testing.T) {
+	t.Setenv("GCP_PROJECT", "")
+	t.Setenv("AZURE_SUBSCRIPTION_ID", "")
+	useRuntime(t, []cloud.Resource{{
+		ID: "i-1", Provider: "aws", Type: cloud.ResourceEC2, Status: "running", CostUSD: 1,
+	}}, nil, nil, nil)
+	_, stderr, err := runCLI(t, "rip")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(stderr, "skipped: GCP project is not set") || !strings.Contains(stderr, "skipped: Azure subscription is not set") {
+		t.Fatalf("stderr = %s", stderr)
+	}
+}
+
+func TestFindBillsCSV(t *testing.T) {
+	t.Setenv("CLOUDRIPPER_IMAP_HOST", "")
+	t.Setenv("CLOUDRIPPER_GMAIL_TOKEN", "")
+	t.Setenv("GCP_PROJECT", "")
+	t.Setenv("AZURE_SUBSCRIPTION_ID", "")
+	path := t.TempDir() + "/card.csv"
+	body := "Date,Description,Amount\n2026-09-02,DIGITALOCEAN.COM,-15.00\n2026-09-03,AMAZON WEB SERVICES,-42.50\n2026-08-01,STARBUCKS,-4.50\n"
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, stderr, err := runCLI(t, "--output", "json", "find-bills", "--csv", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out+stderr, "s3cret") {
+		t.Fatal("output contained a secret")
+	}
+	if !strings.Contains(out, "DigitalOcean") || !strings.Contains(out, "possibly forgotten") {
+		t.Fatalf("output = %s", out)
+	}
+	if !strings.Contains(out, "AWS") || !strings.Contains(out, "configured") {
+		t.Fatalf("output = %s", out)
+	}
+	if strings.Contains(strings.ToLower(out), "starbucks") {
+		t.Fatalf("output = %s", out)
 	}
 }
 

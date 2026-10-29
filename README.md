@@ -16,6 +16,8 @@ cloudripper scale --policy policy.json --apply
 cloudripper watch --once
 cloudripper schedule
 cloudripper chaos --target my-app --kind PodChaos --duration 30s
+cloudripper rip --all-regions
+cloudripper find-bills --csv card-export.csv
 ```
 
 `--output table` (the default), `json`, or `csv` works on every command that prints rows. `CLOUDRIPPER_OUTPUT` sets the same value when the flag is omitted. CSV cells that start with `=`, `+`, `-`, or `@` are prefixed so spreadsheets do not treat them as formulas.
@@ -30,6 +32,12 @@ cloudripper chaos --target my-app --kind PodChaos --duration 30s
 | GCP | GCE, disks, addresses, GCS, forwarding rules, Cloud Functions, GKE, managed instance groups | Stop, start, delete, or resize a GCE instance. Delete an unattached disk, an unused address, or an idle forwarding rule. Label a GCE schedule. |
 | Azure | Virtual machines, managed disks, public IPs, storage accounts, load balancers, Function apps, AKS | Deallocate, start, delete, or resize a VM. Delete an unattached disk, an unused public IP, or a load balancer with empty backend pools. Tag a VM schedule. |
 
+`--all-regions` asks EC2 `DescribeRegions` for every region and scans the ones that are enabled. Opt-in regions that are not enabled are skipped. With that flag, Cost Explorer is not limited to a single region. `scale` still uses `--aws-region`.
+
+S3 buckets are global, so each scan calls `GetBucketLocation` and keeps only buckets in the regions being scanned. An empty location constraint is `us-east-1`, and the legacy `EU` constraint is `eu-west-1`. A bucket in another region does not appear with a blank region column.
+
+When `GCP_PROJECT` or `AZURE_SUBSCRIPTION_ID` is unset, scan commands print one line, `skipped: GCP project is not set` or `skipped: Azure subscription is not set`. A missing credential error is rewritten the same way. Other scan failures stay warnings and do not drop resources that were already found.
+
 S3, GCS, Lambda, Cloud Functions, Azure Functions, storage accounts, EKS, GKE, and AKS are inventory only. CloudRipper does not delete databases or Kubernetes clusters. RDS terminate returns an error; stop and rightsize are the supported database actions. Stopped EC2 compute is priced at $0 when EBS volumes are listed on their own, so disk cost is not counted twice. Lambda, object storage, and Kubernetes control-plane lines stay at a $0 estimate until a billing export matches them. EKS and GKE clusters use a flat control-plane estimate. Auto Scaling groups and managed instance groups are listed at $0 because their instances are counted separately.
 
 A provider that fails mid-scan does not drop resources the other providers already returned. The warning is printed and the command continues.
@@ -38,7 +46,7 @@ A provider that fails mid-scan does not drop resources the other providers alrea
 
 `rip` and `cost` call:
 
-- **AWS Cost Explorer** for daily `UnblendedCost` in the scan region over the trailing 30 days. The API client uses `us-east-1`. Service totals are kept when the resource-level call fails; that call is often disabled on an account, and the failure is a warning.
+- **AWS Cost Explorer** for daily `UnblendedCost` in the scan region over the trailing 30 days (`--all-regions` drops the region filter). The API client uses `us-east-1`. Service totals are kept when the resource-level call fails. If the account is not enabled for Cost Explorer, the message says to enable it in the Billing console and that data usually appears after about 24 hours. `rip` and `cost` print that warning once on stderr for table and CSV output, and once inside JSON output.
 - **GCP Cloud Billing BigQuery export** when `GCP_PROJECT` and `GCP_BILLING_TABLE` (`project.dataset.table`) are set. The query nets credits. Any other table string is rejected.
 - **Azure Cost Management** for the subscription, optionally limited to one resource group.
 
@@ -96,6 +104,24 @@ With no policy file, the command discovers Auto Scaling groups and managed insta
 
 Slack uses `SLACK_WEBHOOK_URL`. Email uses `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USER`, `SMTP_PASSWORD`, `ALERT_EMAIL_FROM`, and `ALERT_EMAIL_TO`. With neither sink configured, the alert is printed. `--state` stores samples so a restart still has a baseline. `--enforce-schedules` runs due schedule actions; a live run requires `--yes`.
 
+## Forgotten bills
+
+`find-bills` looks through mail and an optional card CSV for invoices from AWS, Google Cloud, Azure, DigitalOcean, Linode/Akamai, Vercel, Netlify, Heroku, Cloudflare, Supabase, Firebase, MongoDB Atlas, and OpenAI. For each provider it reports the account id when one is present, the latest amount and date, and whether CloudRipper is already configured for that provider. Anything else is marked `possibly forgotten`.
+
+```bash
+export CLOUDRIPPER_IMAP_HOST=imap.example.com
+export CLOUDRIPPER_IMAP_USER=you@example.com
+export CLOUDRIPPER_IMAP_PASSWORD=app-password
+cloudripper find-bills
+
+cloudripper find-bills --gmail-token "$HOME/.cloudripper/gmail-token.json"
+cloudripper find-bills --csv card-export.csv --since 2400h
+```
+
+IMAP logs in, then `EXAMINE`s the mailbox and fetches `BODY.PEEK`. It does not mark mail read, delete it, or change flags. Gmail is a series of GET requests. The token file is JSON with `access_token` (and optional `expiry`) and needs the `gmail.readonly` scope. The command does not print passwords, tokens, or message bodies. Card amounts are shown as positive charges. Rows that do not match the provider list are ignored.
+
+AWS is reported as configured because the CLI always scans it. GCP is configured when `GCP_PROJECT` is set, and Azure when `AZURE_SUBSCRIPTION_ID` is set.
+
 ## Chaos
 
 `chaos` posts to Chaos Mesh (`POST /api/v1/experiments`) or Gremlin (`POST /v1/attacks`). The action is `pod-kill`, `delay`, or `cpu` for `PodChaos`, `NetworkChaos`, and `StressChaos` unless `--action` overrides it.
@@ -138,6 +164,12 @@ The `infrastructure/` Terraform stack and `pulumi/` program in this repo are sam
 | `CHAOS_MAX_DURATION` | Blast-radius duration | `5m` |
 | `CHAOS_MAX_TARGETS` | Blast-radius target count | `20` |
 | `DRY_RUN` | Preview mutations | `false` |
+| `CLOUDRIPPER_IMAP_HOST` | IMAP server for `find-bills` | — |
+| `CLOUDRIPPER_IMAP_PORT` | IMAP TLS port | `993` |
+| `CLOUDRIPPER_IMAP_USER` | IMAP user | — |
+| `CLOUDRIPPER_IMAP_PASSWORD` | IMAP app password (not logged) | — |
+| `CLOUDRIPPER_IMAP_MAILBOX` | Mailbox to examine | `INBOX` |
+| `CLOUDRIPPER_GMAIL_TOKEN` | Gmail OAuth token JSON path | — |
 
 Flags override the matching variables: `--aws-region`, `--gcp-project`, `--gcp-region`, `--azure-subscription`, `--azure-resource-group`, `--audit-log`, `--output`, `--dry-run`, `--yes`.
 
@@ -197,6 +229,7 @@ internal/apply/       Confirmation, protect tags, IaC guard, audit
 internal/scale/       ASG, MIG, EC2, and GCE policies
 internal/watch/       Interval sampling and spike detection
 internal/chaos/       Chaos Mesh / Gremlin plus blast-radius checks
+internal/bills/       Read-only billing mail and card CSV matching
 internal/iac/         Terraform state and Pulumi export detection
 internal/notify/      Slack, email, stdout
 infrastructure/       Sample Terraform stack
