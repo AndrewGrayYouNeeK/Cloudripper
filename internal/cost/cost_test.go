@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/costmanagement/armcostmanagement"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/costexplorer"
@@ -72,11 +72,15 @@ func TestBillingSQLRejectsInjection(t *testing.T) {
 }
 
 type fakeExplorer struct {
+	serviceErr  error
 	resourceErr error
 	region      string
 }
 
 func (f *fakeExplorer) GetCostAndUsage(_ context.Context, params *costexplorer.GetCostAndUsageInput, _ ...func(*costexplorer.Options)) (*costexplorer.GetCostAndUsageOutput, error) {
+	if f.serviceErr != nil {
+		return nil, f.serviceErr
+	}
 	if params.Filter != nil && params.Filter.Dimensions != nil && len(params.Filter.Dimensions.Values) > 0 {
 		f.region = params.Filter.Dimensions.Values[0]
 	}
@@ -93,7 +97,10 @@ func (f *fakeExplorer) GetCostAndUsage(_ context.Context, params *costexplorer.G
 }
 
 func (f *fakeExplorer) GetCostAndUsageWithResources(context.Context, *costexplorer.GetCostAndUsageWithResourcesInput, ...func(*costexplorer.Options)) (*costexplorer.GetCostAndUsageWithResourcesOutput, error) {
-	return nil, f.resourceErr
+	if f.resourceErr != nil {
+		return nil, f.resourceErr
+	}
+	return &costexplorer.GetCostAndUsageWithResourcesOutput{}, nil
 }
 
 func TestAWSExplorerKeepsServiceTotalsWhenResourceQueryFails(t *testing.T) {
@@ -115,6 +122,45 @@ func TestAWSExplorerKeepsServiceTotalsWhenResourceQueryFails(t *testing.T) {
 	api := explorer.API.(*fakeExplorer)
 	if api.region != "us-west-2" {
 		t.Fatalf("region filter = %s", api.region)
+	}
+}
+
+func TestEmptyRegionOmitsCostExplorerFilter(t *testing.T) {
+	api := &fakeExplorer{}
+	explorer := &AWSExplorer{
+		API:    api,
+		Region: "",
+		Now:    func() time.Time { return time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC) },
+	}
+	if _, err := explorer.Fetch(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if api.region != "" {
+		t.Fatalf("region filter = %q", api.region)
+	}
+}
+
+func TestCostExplorerDisabledHint(t *testing.T) {
+	explorer := &AWSExplorer{
+		API: &fakeExplorer{serviceErr: errors.New("User not enabled for cost explorer access")},
+		Now: func() time.Time { return time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC) },
+	}
+	_, err := explorer.Fetch(context.Background())
+	if err == nil || strings.Contains(err.Error(), "User not enabled") {
+		t.Fatalf("err = %v", err)
+	}
+	if !strings.Contains(err.Error(), "Billing console") || !strings.Contains(err.Error(), "24 hours") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestSummaryOmitsWarnings(t *testing.T) {
+	text := Summary(Resolution{
+		EstimatedTotal: 3,
+		Warnings:       []string{"Cost Explorer is not enabled for this account. Enable it in the AWS Billing console; cost data usually appears after about 24 hours."},
+	})
+	if strings.Contains(text, "warning:") || strings.Contains(text, "Cost Explorer") {
+		t.Fatalf("summary repeated the warning:\n%s", text)
 	}
 }
 

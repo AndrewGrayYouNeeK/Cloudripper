@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/apply"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/audit"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/config"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cost"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/output"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/apply"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/audit"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cost"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/output"
 	"github.com/spf13/cobra"
 )
 
@@ -151,23 +152,88 @@ func render(cmd *cobra.Command, headers []string, rows [][]string, payload any) 
 
 func loadResolution(cmd *cobra.Command) (config.Config, cost.Resolution, error) {
 	cfg := loadConfig()
+	writeSkips(cmd.ErrOrStderr(), cfg)
 	ctx := commandContext(cmd)
 	resources, err := rt.scan(ctx, cfg)
 	if err != nil && len(resources) == 0 {
-		return cfg, cost.Resolution{}, fmt.Errorf("scan failed: %w", err)
+		return cfg, cost.Resolution{}, fmt.Errorf("scan failed: %s", humanizeJoined(err))
 	}
 	if err != nil {
-		warnf(cmd, "%v", err)
+		writeScanProblems(cmd.ErrOrStderr(), err)
 	}
 	res, cerr := rt.costs(ctx, cfg, resources)
 	if cerr != nil {
 		warnf(cmd, "%v", cerr)
 		res = cost.Resolution{Resources: resources, EstimatedTotal: sumCost(resources)}
 	}
-	for _, warning := range res.Warnings {
-		warnf(cmd, "%s", warning)
+	format, ferr := outputFormat()
+	if ferr != nil {
+		return cfg, res, ferr
+	}
+	// JSON includes warnings in the payload. Table and CSV print each warning once on stderr.
+	if format != output.FormatJSON {
+		for _, warning := range res.Warnings {
+			warnf(cmd, "%s", warning)
+		}
 	}
 	return cfg, res, nil
+}
+
+func writeSkips(w io.Writer, cfg config.Config) {
+	for _, line := range skippedProviders(cfg) {
+		fmt.Fprintln(w, line)
+	}
+}
+
+func skippedProviders(cfg config.Config) []string {
+	var lines []string
+	if strings.TrimSpace(cfg.GCPProject) == "" {
+		lines = append(lines, "skipped: GCP project is not set (set GCP_PROJECT or --gcp-project)")
+	}
+	if strings.TrimSpace(cfg.AzureSubscription) == "" {
+		lines = append(lines, "skipped: Azure subscription is not set (set AZURE_SUBSCRIPTION_ID or --azure-subscription)")
+	}
+	return lines
+}
+
+func writeScanProblems(w io.Writer, err error) {
+	if err == nil {
+		return
+	}
+	for _, line := range strings.Split(err.Error(), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		fmt.Fprintln(w, humanizeScanLine(line))
+	}
+}
+
+func humanizeJoined(err error) string {
+	if err == nil {
+		return ""
+	}
+	var parts []string
+	for _, line := range strings.Split(err.Error(), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		parts = append(parts, strings.TrimPrefix(humanizeScanLine(line), "warning: "))
+	}
+	return strings.Join(parts, "; ")
+}
+
+func humanizeScanLine(line string) string {
+	lower := strings.ToLower(line)
+	switch {
+	case strings.Contains(lower, "gcp") && (strings.Contains(lower, "credential") || strings.Contains(lower, "could not find default")):
+		return "skipped: GCP credentials are not available (set application default credentials)"
+	case strings.Contains(lower, "azure") && (strings.Contains(lower, "credential") || strings.Contains(lower, "defaultazurecredential")):
+		return "skipped: Azure credentials are not available (set Azure CLI or environment credentials)"
+	default:
+		return "warning: " + line
+	}
 }
 
 func sumCost(resources []cloud.Resource) float64 {

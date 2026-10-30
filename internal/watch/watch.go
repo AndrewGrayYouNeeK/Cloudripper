@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/notify"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/notify"
 )
 
 // Snapshot is one cost sample.

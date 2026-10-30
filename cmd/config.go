@@ -1,14 +1,17 @@
 package cmd
 
 import (
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/config"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
 )
 
 func loadConfig() config.Config {
 	cfg := config.Load()
 	if awsRegion != "" {
 		cfg.AWSRegion = awsRegion
+	}
+	if rootCmd.PersistentFlags().Changed("all-regions") {
+		cfg.AllRegions = allRegions
 	}
 	if gcpProject != "" {
 		cfg.GCPProject = gcpProject
@@ -36,7 +39,9 @@ func buildProviders(cfg config.Config) []cloud.Provider {
 	var providers []cloud.Provider
 
 	// Always include AWS; the SDK credential chain resolves IAM roles, SSO, etc.
-	providers = append(providers, cloud.NewAWSProvider(cfg.AWSRegion))
+	awsProvider := cloud.NewAWSProvider(cfg.AWSRegion)
+	awsProvider.SetAllRegions(cfg.AllRegions)
+	providers = append(providers, awsProvider)
 
 	if cfg.GCPProject != "" {
 		providers = append(providers, cloud.NewGCPProvider(cfg.GCPProject, cfg.GCPRegion))

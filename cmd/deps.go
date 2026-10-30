@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/config"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cost"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/scale"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cost"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/scale"
 )
 
 type runtime struct {
@@ -38,7 +38,11 @@ func defaultScan(ctx context.Context, cfg config.Config) ([]cloud.Resource, erro
 
 func defaultCosts(ctx context.Context, cfg config.Config, resources []cloud.Resource) (cost.Resolution, error) {
 	var sources []cost.Source
-	if explorer, err := cost.NewAWSExplorer(ctx, cfg.AWSRegion); err != nil {
+	costRegion := cfg.AWSRegion
+	if cfg.AllRegions {
+		costRegion = ""
+	}
+	if explorer, err := cost.NewAWSExplorer(ctx, costRegion); err != nil {
 		sources = append(sources, cost.StaticSource{SourceName: cloud.CostSourceAWS, Err: err})
 	} else {
 		sources = append(sources, explorer)

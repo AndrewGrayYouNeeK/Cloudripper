@@ -1,4 +1,4 @@
-module github.com/AndrewGrayYouNeeK/cloudripper
+module github.com/AndrewGrayYouNeeK/Cloudripper
 
 go 1.22
 

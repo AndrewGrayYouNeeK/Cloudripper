@@ -17,6 +17,7 @@ var (
 	azureSubscription  string
 	azureResourceGroup string
 	auditLog           string
+	allRegions         bool
 )
 
 // rootCmd is the base CLI command.
@@ -44,6 +45,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&yes, "yes", false, "skip interactive confirmation for apply, scale, schedule, and chaos")
 	rootCmd.PersistentFlags().StringVar(&outputFmt, "output", "", "output format: table, json, or csv (default table)")
 	rootCmd.PersistentFlags().StringVar(&awsRegion, "aws-region", "", "AWS region (default: AWS_REGION env or us-east-1)")
+	rootCmd.PersistentFlags().BoolVar(&allRegions, "all-regions", false, "scan every enabled AWS region; opt-in regions that are not enabled are skipped")
 	rootCmd.PersistentFlags().StringVar(&gcpProject, "gcp-project", "", "GCP project (default: GCP_PROJECT env)")
 	rootCmd.PersistentFlags().StringVar(&gcpRegionFlag, "gcp-region", "", "GCP region (default: GCP_REGION env or us-central1)")
 	rootCmd.PersistentFlags().StringVar(&azureSubscription, "azure-subscription", "", "Azure subscription ID (default: AZURE_SUBSCRIPTION_ID)")

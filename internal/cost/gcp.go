@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 )
 
 var billingTablePattern = regexp.MustCompile(`^[A-Za-z0-9_:\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+$`)

@@ -53,7 +53,7 @@ func scanAWS(ctx context.Context, region string, c AWSClients) ([]Resource, erro
 		}
 	}
 	if c.S3 != nil {
-		got, err := scanS3(ctx, c.S3)
+		got, err := scanS3(ctx, c.S3, region)
 		resources = append(resources, got...)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("s3: %w", err))
@@ -217,9 +217,10 @@ func scanRDS(ctx context.Context, region string, api RDSAPI) ([]Resource, error)
 	}
 }
 
-func scanS3(ctx context.Context, api S3API) ([]Resource, error) {
+func scanS3(ctx context.Context, api S3API, region string) ([]Resource, error) {
 	var token *string
 	var resources []Resource
+	var errs []error
 	for {
 		out, err := api.ListBuckets(ctx, &s3.ListBucketsInput{ContinuationToken: token})
 		if err != nil {
@@ -227,6 +228,17 @@ func scanS3(ctx context.Context, api S3API) ([]Resource, error) {
 		}
 		for _, bucket := range out.Buckets {
 			name := awsString(bucket.Name)
+			if name == "" {
+				continue
+			}
+			loc, locErr := bucketRegion(ctx, api, name, awsString(bucket.BucketRegion))
+			if locErr != nil {
+				errs = append(errs, fmt.Errorf("%s: %w", name, locErr))
+				continue
+			}
+			if region != "" && !strings.EqualFold(loc, region) {
+				continue
+			}
 			tags := map[string]string{}
 			if tagOut, tagErr := api.GetBucketTagging(ctx, &s3.GetBucketTaggingInput{Bucket: bucket.Name}); tagErr == nil {
 				tags = s3Tags(tagOut.TagSet)
@@ -236,18 +248,37 @@ func scanS3(ctx context.Context, api S3API) ([]Resource, error) {
 				Name:       name,
 				Provider:   "aws",
 				Type:       ResourceS3,
-				Region:     awsString(bucket.BucketRegion),
+				Region:     loc,
 				Status:     "listed",
 				CostUSD:    0,
 				CostSource: CostSourceEstimate,
 				Tags:       tags,
 			})
 		}
-		if awsString(out.ContinuationToken) == "" {
-			return resources, nil
+		if out == nil || awsString(out.ContinuationToken) == "" {
+			break
 		}
 		token = out.ContinuationToken
 	}
+	return resources, errors.Join(errs...)
+}
+
+func bucketRegion(ctx context.Context, api S3API, name, fallback string) (string, error) {
+	out, err := api.GetBucketLocation(ctx, &s3.GetBucketLocationInput{Bucket: aws.String(name)})
+	if err != nil {
+		if fallback = NormalizeBucketLocation(fallback); fallback != "" {
+			return fallback, nil
+		}
+		return "", err
+	}
+	loc := ""
+	if out != nil {
+		loc = string(out.LocationConstraint)
+	}
+	if loc == "" {
+		loc = fallback
+	}
+	return NormalizeBucketLocation(loc), nil
 }
 
 func scanELB(ctx context.Context, region string, api ELBAPI) ([]Resource, error) {

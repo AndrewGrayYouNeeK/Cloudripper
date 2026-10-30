@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/schedule"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/schedule"
 )
 
 func executeGCP(ctx context.Context, api GCPActions, r Resource, action, spec string) (string, error) {

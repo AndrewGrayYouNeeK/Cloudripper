@@ -6,13 +6,13 @@ import (
 	"io"
 	"time"
 
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/apply"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cloud"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/config"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/cost"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/notify"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/optimizer"
-	"github.com/AndrewGrayYouNeeK/cloudripper/internal/watch"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/apply"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cost"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/notify"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/optimizer"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/watch"
 	"github.com/spf13/cobra"
 )
 
@@ -60,7 +60,7 @@ func (m *memoryCollector) Collect(ctx context.Context) (watch.Snapshot, error) {
 	snap, resources, err := collectWithResources(ctx, m.cfg)
 	m.resources = resources
 	if err != nil && len(resources) > 0 {
-		fmt.Fprintf(m.err, "warning: %v\n", err)
+		writeScanProblems(m.err, err)
 		return snap, nil
 	}
 	return snap, err
@@ -77,6 +77,7 @@ func runWatch(cmd *cobra.Command, _ []string) error {
 	if watchFlags.enforce && !cfg.DryRun && !yes {
 		return fmt.Errorf("refusing to enforce schedules without --yes (or set --dry-run to preview)")
 	}
+	writeSkips(cmd.ErrOrStderr(), cfg)
 	collector := &memoryCollector{cfg: cfg, err: cmd.ErrOrStderr()}
 	opts := watch.Options{
 		Interval:  cfg.WatchInterval,

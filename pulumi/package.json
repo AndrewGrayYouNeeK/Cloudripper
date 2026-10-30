@@ -2,6 +2,7 @@
   "name": "cloudripper-infra",
   "version": "0.1.0",
   "description": "Cloudripper Pulumi infrastructure",
+  "license": "MIT",
   "main": "index.ts",
   "scripts": {
     "build": "tsc"
