@@ -24,7 +24,8 @@ Find what you are paying for and not using, catch the cloud and developer subscr
 ## Quickstart
 
 ```bash
-# 1. Install (needs Go 1.22+)
+# 1. Install: grab a prebuilt binary from the Releases page (no Go needed),
+#    or build it yourself with Go 1.22+:
 go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest
 
 # 2. Point it at an account. AWS uses the normal SDK credential chain.
@@ -247,7 +248,19 @@ AWS uses the standard SDK credential chain. GCP uses application default credent
 
 ## Install
 
-With Go 1.22 or newer:
+Prebuilt binaries: download the archive for your system from the [latest release](https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest) (Linux, macOS, and Windows; amd64 and arm64). Check it against `checksums.txt`, unpack it, and put `cloudripper` on your `PATH`. For example, on Linux amd64:
+
+```bash
+VERSION=0.1.0
+curl -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v${VERSION}/cloudripper_${VERSION}_linux_amd64.tar.gz
+tar xzf cloudripper_${VERSION}_linux_amd64.tar.gz
+sudo mv cloudripper /usr/local/bin/
+cloudripper --help
+```
+
+The binaries are not code-signed, so macOS may ask you to allow it in System Settings, and Windows SmartScreen may warn.
+
+Or with Go 1.22 or newer:
 
 ```bash
 go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest
@@ -270,7 +283,7 @@ docker build -t cloudripper .
 docker run --rm cloudripper rip --help
 ```
 
-There are no tagged releases or prebuilt binaries yet. Release archives are defined in `.goreleaser.yaml` (linux, darwin, and windows; amd64 and arm64; CGO disabled). Tag a version and run `goreleaser release`, or `goreleaser release --snapshot --clean` locally.
+Release archives are built with [GoReleaser](https://goreleaser.com) from `.goreleaser.yaml` (linux, darwin, and windows; amd64 and arm64; CGO disabled). To cut one, tag a version and run `goreleaser release`, or try `goreleaser release --snapshot --clean` locally.
 
 ## Tests
 
