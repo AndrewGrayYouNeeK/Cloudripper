@@ -28,7 +28,7 @@ func runRip(cmd *cobra.Command, _ []string) error {
 	}
 	rows := rowsFromResources(res.Resources)
 	if len(rows) == 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), "No resources found. Either your clouds are empty or credentials need setup.")
+		fmt.Fprintln(cmd.OutOrStdout(), "No resources found in the scanned region(s). Try --all-regions, or check credentials.")
 		return nil
 	}
 

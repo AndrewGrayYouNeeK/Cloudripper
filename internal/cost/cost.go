@@ -137,9 +137,9 @@ func Summary(res Resolution) string {
 	if !res.ActualAvailable {
 		b.WriteString("Actual spend: unavailable, using estimates\n")
 	} else {
-		fmt.Fprintf(&b, "Actual spend (trailing window): $%.2f\n", res.ActualTotal)
+		fmt.Fprintf(&b, "Actual spend (trailing window): $%.2f\n", noNegZero(res.ActualTotal))
 		for _, snap := range res.Snapshots {
-			fmt.Fprintf(&b, "  %s: $%.2f across %d services", snap.Source, snap.TotalUSD, len(snap.Services))
+			fmt.Fprintf(&b, "  %s: $%.2f across %d services", snap.Source, noNegZero(snap.TotalUSD), len(snap.Services))
 			if len(snap.Resources) > 0 {
 				fmt.Fprintf(&b, ", %d resources", len(snap.Resources))
 			}
@@ -180,4 +180,12 @@ func ParseUSD(amount, unit string) (float64, error) {
 		return 0, fmt.Errorf("amount %q: %w", amount, err)
 	}
 	return v, nil
+}
+
+// noNegZero avoids printing "$-0.00" for tiny credits or rounding noise.
+func noNegZero(v float64) float64 {
+	if v > -0.005 && v < 0.005 {
+		return 0
+	}
+	return v
 }
