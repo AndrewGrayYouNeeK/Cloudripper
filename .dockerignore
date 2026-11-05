@@ -1,7 +1,7 @@
 .git
 .github
 bin
-cloudripper
+/cloudripper
 cloudripper-audit.log
 .cloudripper
 pulumi/node_modules

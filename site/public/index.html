@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YouNeeK CloudRipper — Find cloud waste, real spend & forgotten bills | AWS, GCP, Azure</title>
+<meta name="description" content="CloudRipper is a free, open-source (MIT) Go CLI that scans AWS, GCP and Azure for cloud waste and real spend, finds forgotten paid services, and runs safe chaos tests. Scans need read-only access.">
+<link rel="canonical" href="https://cloudripper.youneek.dev/">
+<meta name="theme-color" content="#0b1020">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="YouNeeK CloudRipper">
+<meta property="og:title" content="YouNeeK CloudRipper — One CLI for cloud waste, real spend, and safe chaos tests">
+<meta property="og:description" content="Free, open-source CLI for AWS, GCP and Azure. Find waste, see real spend, catch forgotten paid services, and run safe chaos tests.">
+<meta property="og:url" content="https://cloudripper.youneek.dev/">
+<meta property="og:image" content="https://cloudripper.youneek.dev/og-logo.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="YouNeeK CloudRipper logo: the N is a purple lightning bolt ripping through storm clouds">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="YouNeeK CloudRipper — cloud waste, real spend, safe chaos tests">
+<meta name="twitter:description" content="Free, open-source (MIT) CLI for AWS, GCP and Azure.">
+<meta name="twitter:image" content="https://cloudripper.youneek.dev/og-logo.jpg">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"YouNeeK CloudRipper","applicationCategory":"DeveloperApplication","operatingSystem":"Linux, macOS, Windows","license":"https://opensource.org/license/mit","url":"https://cloudripper.youneek.dev/","codeRepository":"https://github.com/AndrewGrayYouNeeK/Cloudripper","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Open-source Go CLI that scans AWS, GCP and Azure for cloud waste and real spend, finds forgotten paid services, and runs safe chaos tests."}
+</script>
+<style>
+:root{--bg:#0b1020;--bg2:#101833;--card:#131c38;--line:#25315a;--text:#e6edf7;--mute:#9fb0c9;--acc:#38bdf8;--acc2:#818cf8;--ok:#34d399}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#1b2a5a55,transparent),var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--acc)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #fbbf24;outline-offset:3px;border-radius:6px}
+.skip{position:absolute;left:-999px;top:8px;background:#fff;color:#000;padding:8px 12px;border-radius:6px;z-index:10}
+.skip:focus{left:8px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0;gap:12px;flex-wrap:wrap}
+.logo{font-weight:800;font-size:1.2rem;color:var(--text);text-decoration:none;letter-spacing:-.02em}
+.logo span{color:var(--acc)}
+.logo{display:inline-flex;align-items:center;gap:10px}
+.logo img{width:40px;height:40px;border-radius:10px;display:block}
+.herologo{display:block;width:min(560px,92%);height:auto;margin:0 auto 4px;-webkit-mask-composite:source-in;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent),linear-gradient(180deg,transparent,#000 10%,#000 90%,transparent);mask-composite:intersect;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent),linear-gradient(180deg,transparent,#000 10%,#000 90%,transparent)}
+nav a{color:var(--mute);text-decoration:none;margin-left:18px;font-size:.95rem}
+nav a:hover{color:var(--text)}
+.hero{padding:56px 0 40px;text-align:center}
+.demo{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:12px;margin-top:8px}
+.badge{display:inline-block;border:1px solid var(--line);color:var(--mute);border-radius:999px;padding:4px 14px;font-size:.85rem;background:#ffffff08}
+h1{font-size:clamp(2rem,5.2vw,3.5rem);line-height:1.1;margin:18px auto 16px;max-width:880px;letter-spacing:-.03em}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--mute);font-size:1.15rem;max-width:680px;margin:0 auto 28px}
+.install{display:flex;align-items:center;gap:8px;max-width:760px;margin:0 auto;background:#060a18;border:1px solid var(--line);border-radius:12px;padding:10px 10px 10px 16px;text-align:left}
+.install code{flex:1;overflow-x:auto;white-space:nowrap;font:0.95rem ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#c7d7f5;padding:4px 0}
+.install code b{color:var(--ok);font-weight:400}
+button,.btn{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:#1a2650;color:var(--text);padding:10px 16px;text-decoration:none;display:inline-block;font-weight:600}
+button:hover,.btn:hover{background:#22327006;border-color:var(--acc)}
+.primary{background:linear-gradient(90deg,#0ea5e9,#6366f1);border-color:transparent;color:#fff}
+.primary:hover{filter:brightness(1.1)}
+.cta{margin-top:22px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+section{padding:56px 0}
+h2{font-size:clamp(1.6rem,3.5vw,2.2rem);letter-spacing:-.02em;margin:0 0 8px;text-align:center}
+.sub{color:var(--mute);text-align:center;max-width:640px;margin:0 auto 32px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+.card h3{margin:0 0 6px;font-size:1.1rem}
+.card p{margin:0;color:var(--mute)}
+.ico{font-size:1.5rem}
+.steps{counter-reset:s;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));padding:0;list-style:none}
+.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+.steps li::before{content:counter(s);display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:linear-gradient(90deg,#0ea5e9,#6366f1);font-weight:700;margin-bottom:10px}
+.steps h3{margin:0 0 6px}.steps p{margin:0;color:var(--mute)}
+pre{background:#060a18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font:0.9rem/1.5 ui-monospace,Menlo,Consolas,monospace;color:#c7d7f5;max-width:760px;margin:24px auto 0}
+.safe{max-width:760px;margin:24px auto 0;border:1px solid #1f6f55;background:#0d2a2366;border-radius:14px;padding:16px 20px;color:#bdf3df}
+.price{display:flex;flex-direction:column}
+.price.hl{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc),0 10px 40px #0ea5e91f}
+.amt{font-size:2.2rem;font-weight:800;letter-spacing:-.02em;margin:8px 0 2px}
+.amt small{font-size:1rem;font-weight:500;color:var(--mute)}
+.tag{font-size:.8rem;color:#fbbf24;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.price ul{list-style:none;padding:0;margin:14px 0 20px;flex:1}
+.price li{padding:5px 0 5px 24px;position:relative;color:var(--text)}
+.price li::before{content:"✓";position:absolute;left:0;color:var(--ok);font-weight:700}
+.price .btn{text-align:center;width:100%}
+form.wl{max-width:560px;margin:0 auto}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+input[type=email]{flex:1 1 240px;background:#060a18;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font:inherit}
+label.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.hp{position:absolute;left:-9999px;height:0;overflow:hidden}
+#wl-msg{min-height:1.6em;margin-top:12px;text-align:center}
+.err{color:#fca5a5}.good{color:var(--ok)}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:10px auto;max-width:760px}
+summary{cursor:pointer;font-weight:600}
+details p{color:var(--mute);margin:10px 0 0}
+footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--mute);font-size:.95rem}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer a{margin-right:16px}
+@media (max-width:560px){nav{display:none}.hero{padding-top:32px}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+<header class="top">
+  <a class="logo" href="/" aria-label="YouNeeK CloudRipper home"><img src="/logo-mark.webp" width="40" height="40" alt="">YouNeeK <span>CloudRipper</span></a>
+  <nav aria-label="Primary"><a href="#features">Features</a><a href="#how">How it works</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="https://github.com/AndrewGrayYouNeeK/Cloudripper">GitHub</a></nav>
+</header>
+</div>
+<main id="main">
+<div class="wrap">
+<div class="hero">
+  <img class="herologo" src="/logo.webp" width="944" height="600" alt="YouNeeK CloudRipper logo: the N is a purple lightning bolt ripping through storm clouds" fetchpriority="high">
+  <span class="badge">Free &amp; open source · MIT licensed</span>
+  <h1>One CLI for <em>cloud waste, real spend, and safe chaos tests</em>, across AWS, GCP, and Azure.</h1>
+  <p class="lead">Find what you're paying for and not using, catch the subscriptions you forgot about, and test how your systems fail. Scans only need read-only access to your accounts.</p>
+  <div class="install" role="group" aria-label="Install command">
+    <code id="cmd"><b>$</b> go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest</code>
+    <button type="button" id="copy" aria-label="Copy install command">Copy</button>
+  </div>
+  <div class="cta">
+    <a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper">View on GitHub</a>
+    <a class="btn" href="#pricing">See pricing</a>
+  </div>
+</div>
+</div>
+
+<section id="demo"><div class="wrap">
+  <h2>See it run</h2>
+  <p class="sub">No cloud credentials needed for this one: <code>--help</code>, then <code>find-bills</code> on a sample card export (made-up charges).</p>
+  <img class="demo" src="/demo.gif" width="1100" height="640" loading="lazy" alt="Terminal recording: cloudripper --help, then cloudripper find-bills listing AWS as configured and DigitalOcean, MongoDB Atlas, OpenAI and Vercel as possibly forgotten">
+</div></section>
+
+<section id="features"><div class="wrap">
+  <h2>Everything cloud-cost, in one binary</h2>
+  <p class="sub">No agents, no SaaS signup, no data leaving your machine.</p>
+  <div class="grid">
+    <div class="card"><div class="ico" aria-hidden="true">🧹</div><h3>Cloud waste scanner</h3><p>Spots idle, orphaned and oversized resources across AWS, GCP and Azure, so you can shut off what you don't need.</p></div>
+    <div class="card"><div class="ico" aria-hidden="true">💵</div><h3>Real spend</h3><p>Pulls actual billing numbers from your cloud's cost APIs, not estimates, and shows where the money goes.</p></div>
+    <div class="card"><div class="ico" aria-hidden="true">🔎</div><h3>Find forgotten bills</h3><p>The <code>find-bills</code> command hunts down paid services you signed up for and forgot, from your receipts and a bank CSV export.</p></div>
+    <div class="card"><div class="ico" aria-hidden="true">💥</div><h3>Safe chaos tests</h3><p>Run controlled failure experiments to see how your setup behaves, with guardrails and a dry-run first.</p></div>
+    <div class="card"><div class="ico" aria-hidden="true">☁️</div><h3>Multi-cloud</h3><p>One tool and one report for AWS, GCP and Azure instead of three consoles and three sets of scripts.</p></div>
+    <div class="card"><div class="ico" aria-hidden="true">🔓</div><h3>Open source</h3><p>MIT licensed Go. Read the code, run it locally, fork it. Single static binary.</p></div>
+  </div>
+</div></section>
+
+<section id="how"><div class="wrap">
+  <h2>How it works</h2>
+  <p class="sub">Three steps. Scanning only needs read-only access.</p>
+  <ol class="steps">
+    <li><h3>Install</h3><p>One <code>go install</code> command gives you the <code>cloudripper</code> binary.</p></li>
+    <li><h3>Connect read-only</h3><p>Use a read-only role or key you already have. Scans never need permission to change or delete anything.</p></li>
+    <li><h3>Scan &amp; act</h3><p>Get a list of waste, real spend, and forgotten bills. You decide what to turn off. Changes only happen if you pass <code>--apply</code> and confirm.</p></li>
+  </ol>
+  <pre aria-label="Example usage"><code>$ go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest
+$ cloudripper rip             # inventory what is running in your cloud accounts
+$ cloudripper cost            # actual vs. estimated spend
+$ cloudripper find-bills      # surface forgotten paid services
+$ cloudripper --help          # see cost and chaos-test commands</code></pre>
+  <div class="safe"><strong>Read-only scans.</strong> Cleanup actions are off unless you pass <code>--apply</code>. Use <code>ReadOnlyAccess</code> and billing read-only policies on AWS (or the equivalent viewer roles on GCP and Azure). Your credentials stay on your machine.</div>
+</div></section>
+
+<section id="pricing"><div class="wrap">
+  <h2>Pricing</h2>
+  <p class="sub">The CLI is free forever. Pay only if you want it hosted for you or your team.</p>
+  <div class="grid">
+    <div class="card price">
+      <h3>Free</h3><div class="amt">$0<small> forever</small></div>
+      <p>The full open-source CLI.</p>
+      <ul><li>AWS, GCP and Azure scanning</li><li>Real spend reports</li><li>find-bills</li><li>Safe chaos tests</li><li>MIT license</li></ul>
+      <a class="btn" href="https://github.com/AndrewGrayYouNeeK/Cloudripper">Get the CLI</a>
+    </div>
+    <div class="card price hl">
+      <span class="tag">Coming soon</span>
+      <h3>Pro</h3><div class="amt">$29<small>/mo</small></div>
+      <p>A hosted dashboard so you don't have to run it by hand.</p>
+      <ul><li>Everything in Free</li><li>Hosted dashboard</li><li>Scheduled scans &amp; history</li><li>Email summaries</li></ul>
+      <a class="btn primary" href="#waitlist">Join the waitlist</a>
+    </div>
+    <div class="card price">
+      <h3>Team / Business</h3><div class="amt"><small>from </small>$199<small>/mo</small></div>
+      <p>For bigger companies with many accounts.</p>
+      <ul><li>Everything in Pro</li><li>Multiple cloud accounts</li><li>SSO</li><li>Alerts</li><li>Priority support</li></ul>
+      <a class="btn" href="mailto:andrewgray@usedartifacts.com?subject=CloudRipper%20Team%2FBusiness">Contact us</a>
+    </div>
+  </div>
+</div></section>
+
+<section id="waitlist"><div class="wrap">
+  <h2>Join the Pro waitlist</h2>
+  <p class="sub">Be first to know when the hosted dashboard launches. No spam, one email.</p>
+  <form class="wl" id="wl" novalidate>
+    <label class="vh" for="email">Email address</label>
+    <div class="row">
+      <input type="email" id="email" name="email" placeholder="you@company.com" autocomplete="email" required>
+      <div class="hp" aria-hidden="true"><label>Company <input type="text" name="company" tabindex="-1" autocomplete="off"></label></div>
+      <button class="primary" type="submit" id="wl-btn">Join waitlist</button>
+    </div>
+    <p id="wl-msg" role="status" aria-live="polite"></p>
+  </form>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <h2>FAQ</h2>
+  <p class="sub"></p>
+  <details><summary>Is CloudRipper really free?</summary><p>Yes. The CLI is open source under the MIT license and free to use, including commercially. Paid plans are only for the optional hosted dashboard.</p></details>
+  <details><summary>Is it safe to point at my cloud account?</summary><p>Scans only need read-only access, so with read-only credentials it can't modify or delete anything. Commands that change things need <code>--apply</code> and a confirmation, and chaos tests are opt-in with blast-radius limits.</p></details>
+  <details><summary>Where do my credentials go?</summary><p>Nowhere. The CLI runs on your machine and uses your local credentials to talk to your cloud providers directly.</p></details>
+  <details><summary>Which clouds are supported?</summary><p>AWS, Google Cloud (GCP) and Microsoft Azure.</p></details>
+  <details><summary>What does find-bills do?</summary><p>It looks through your receipts and an optional bank CSV export for recurring paid services you may have forgotten about, read-only.</p></details>
+  <details><summary>When will Pro launch?</summary><p>Soon. Join the waitlist above and we'll email you once, when it's ready.</p></details>
+  <details><summary>How do I get Team / Business?</summary><p>Email <a href="mailto:andrewgray@usedartifacts.com?subject=CloudRipper%20Team%2FBusiness">andrewgray@usedartifacts.com</a> and we'll set you up.</p></details>
+</div></section>
+</main>
+<footer><div class="wrap">
+  <div><a href="https://github.com/AndrewGrayYouNeeK/Cloudripper">GitHub</a><a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/blob/main/LICENSE">MIT License</a><a href="mailto:andrewgray@usedartifacts.com">Contact</a></div>
+  <div>© 2026 YouNeeK CloudRipper · MIT licensed · a <a href="https://youneek.xyz" style="margin:0">YouNeeK</a> project</div>
+</div></footer>
+<script>
+(function(){
+  var c=document.getElementById('copy');
+  c.addEventListener('click',function(){
+    var t='go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest';
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){c.textContent='Copied!'},function(){
+      var r=document.createRange();r.selectNodeContents(document.getElementById('cmd'));var s=getSelection();s.removeAllRanges();s.addRange(r);c.textContent='Press Ctrl+C';
+    });
+    setTimeout(function(){c.textContent='Copy'},2000);
+  });
+  var f=document.getElementById('wl'),m=document.getElementById('wl-msg'),b=document.getElementById('wl-btn');
+  f.addEventListener('submit',function(e){
+    e.preventDefault();
+    var email=f.email.value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){m.className='err';m.textContent='Please enter a valid email address.';f.email.focus();return}
+    b.disabled=true;m.className='';m.textContent='Joining…';
+    fetch('/api/waitlist',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:email,company:f.company.value})})
+    .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
+    .then(function(x){
+      if(x.ok){m.className='good';m.textContent=x.j.message||"You're on the list!";f.reset()}
+      else{m.className='err';m.textContent=x.j.error||'Something went wrong. Try again.'}
+    }).catch(function(){m.className='err';m.textContent='Network error. Please try again.'})
+    .then(function(){b.disabled=false});
+  });
+})();
+</script>
+</body>
+</html>

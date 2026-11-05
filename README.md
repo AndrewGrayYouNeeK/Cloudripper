@@ -1,4 +1,70 @@
-# CloudRipper
+<p align="center">
+  <img src="docs/logo.png" alt="YouNeeK CloudRipper: the N is a purple lightning bolt ripping through storm clouds" width="480">
+</p>
+
+<h1 align="center">YouNeeK CloudRipper</h1>
+
+<p align="center"><strong>One open-source CLI for cloud waste, real spend, and safe chaos tests, across AWS, GCP, and Azure.</strong></p>
+
+<p align="center">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/AndrewGrayYouNeeK/Cloudripper/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="go.mod"><img alt="Go 1.22+" src="https://img.shields.io/badge/Go-1.22%2B-00ADD8?logo=go&logoColor=white"></a>
+  <a href="https://cloudripper.youneek.dev"><img alt="Website" src="https://img.shields.io/badge/site-cloudripper.youneek.dev-8b5cf6"></a>
+</p>
+
+<p align="center">
+  <img src="docs/demo.gif" alt="Terminal demo: cloudripper --help, then find-bills reading a sample card export" width="820">
+</p>
+
+<sub>The demo needs no cloud credentials: <code>--help</code>, then <code>find-bills</code> on the sample card export in <a href="docs/examples/sample-card-export.csv"><code>docs/examples/</code></a>. The sample charges are made up.</sub>
+
+Find what you are paying for and not using, catch the cloud and developer subscriptions you forgot about, and test how your systems fail. Everything runs on your machine with your own credentials. There is no hosted backend.
+
+## Quickstart
+
+```bash
+# 1. Install (needs Go 1.22+)
+go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest
+
+# 2. Point it at an account. AWS uses the normal SDK credential chain.
+export AWS_PROFILE=my-readonly-profile
+export AWS_REGION=us-east-1
+
+# 3. Scan, then look at spend and savings ideas
+cloudripper rip                 # inventory what is running
+cloudripper cost                # estimated vs. actual trailing 30-day spend
+cloudripper optimize            # recommendations only; nothing changes without --apply
+
+# 4. Hunt for bills you forgot about (no cloud credentials needed)
+cloudripper find-bills --csv card-export.csv
+```
+
+`cost` and `rip` use AWS Cost Explorer for actual spend. Enable it first in the Billing console; data can take about 24 hours to appear. For GCP, set `GCP_PROJECT`; for Azure, set `AZURE_SUBSCRIPTION_ID`. See [Configuration](#configuration).
+
+## Features
+
+- **Waste scan.** `rip` inventories compute, disks, addresses, load balancers, databases, storage, functions, and Kubernetes across AWS, GCP, and Azure.
+- **Real spend.** `cost` reads trailing 30-day spend from Cost Explorer, BigQuery billing export, or Azure Cost Management, and reports estimates and actuals separately.
+- **Savings recommendations.** `optimize` suggests deleting unattached resources, rightsizing, and scheduling. Changes need `--apply` plus a confirmation, honor `--dry-run`, and are written to an audit log.
+- **Forgotten bills.** `find-bills` reads billing mail (IMAP or Gmail, read-only) and a card CSV for AWS, Google Cloud, Azure, DigitalOcean, Linode/Akamai, Vercel, Netlify, Heroku, Cloudflare, Supabase, Firebase, MongoDB Atlas, and OpenAI, and flags the ones you have not set up.
+- **Scheduling, scaling, and cost alerts.** `schedule`, `scale`, and `watch` stop idle compute on a schedule, scale groups from CPU, and alert Slack or email on spend spikes.
+- **Bounded chaos tests.** `chaos` runs Chaos Mesh or Gremlin experiments inside a blast-radius limit, and refuses production-looking targets without `--allow-prod`.
+- **Output you can script.** `--output table|json|csv` on every command that prints rows.
+
+## Free and paid
+
+The CLI is free and MIT licensed.
+
+| | Price | Status |
+| --- | --- | --- |
+| **CLI** | Free | Available now (this repo) |
+| **Pro** | $29/month | Coming soon. [Join the waitlist](https://cloudripper.youneek.dev/#waitlist) |
+| **Team / Business** | From $199/month | [Get in touch](mailto:andrewgray@usedartifacts.com) |
+
+More at [cloudripper.youneek.dev](https://cloudripper.youneek.dev).
+
+## How it works
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -181,16 +247,20 @@ AWS uses the standard SDK credential chain. GCP uses application default credent
 
 ## Install
 
+With Go 1.22 or newer:
+
 ```bash
-go install github.com/AndrewGrayYouNeeK/Cloudripper/...@latest
+go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest
 ```
+
+This puts a `cloudripper` binary in `$(go env GOPATH)/bin`. Add that directory to your `PATH` if it is not already there.
 
 From source:
 
 ```bash
 git clone https://github.com/AndrewGrayYouNeeK/Cloudripper.git
 cd Cloudripper
-go build -o cloudripper .
+go build -o cloudripper ./cmd/cloudripper
 ```
 
 Container image:
@@ -200,7 +270,7 @@ docker build -t cloudripper .
 docker run --rm cloudripper rip --help
 ```
 
-Release archives are defined in `.goreleaser.yaml` (linux, darwin, and windows; amd64 and arm64; CGO disabled). Tag a version and run `goreleaser release`, or `goreleaser release --snapshot --clean` locally.
+There are no tagged releases or prebuilt binaries yet. Release archives are defined in `.goreleaser.yaml` (linux, darwin, and windows; amd64 and arm64; CGO disabled). Tag a version and run `goreleaser release`, or `goreleaser release --snapshot --clean` locally.
 
 ## Tests
 
