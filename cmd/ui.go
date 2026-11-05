@@ -156,7 +156,7 @@ func loadResolution(cmd *cobra.Command) (config.Config, cost.Resolution, error) 
 	ctx := commandContext(cmd)
 	resources, err := rt.scan(ctx, cfg)
 	if err != nil && len(resources) == 0 {
-		return cfg, cost.Resolution{}, fmt.Errorf("scan failed: %s", humanizeJoined(err))
+		return cfg, cost.Resolution{}, friendlyScanError(err)
 	}
 	if err != nil {
 		writeScanProblems(cmd.ErrOrStderr(), err)

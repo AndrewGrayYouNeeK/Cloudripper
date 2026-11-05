@@ -152,7 +152,7 @@ func buildNotifiers(cfg config.Config, w io.Writer) []notify.Notifier {
 func collectWithResources(ctx context.Context, cfg config.Config) (watch.Snapshot, []cloud.Resource, error) {
 	resources, scanErr := rt.scan(ctx, cfg)
 	if scanErr != nil && len(resources) == 0 {
-		return watch.Snapshot{}, nil, scanErr
+		return watch.Snapshot{}, nil, friendlyScanError(scanErr)
 	}
 	resolution, err := rt.costs(ctx, cfg, resources)
 	if err != nil {
