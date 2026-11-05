@@ -6,7 +6,7 @@ project_name: cloudripper
 
 builds:
   - id: cloudripper
-    main: .
+    main: ./cmd/cloudripper
     binary: cloudripper
     env:
       - CGO_ENABLED=0

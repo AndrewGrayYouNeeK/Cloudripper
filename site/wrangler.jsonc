@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cloudripper-site",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-29",
+  "account_id": "d74b0de637f4d9d9eb3efb9e13142784",
+  "workers_dev": true,
+  "assets": { "directory": "./public", "not_found_handling": "404-page" },
+  "kv_namespaces": [{ "binding": "WAITLIST", "id": "d94e269ce0544da9bf955144da23f9fa" }],
+  "routes": [{ "pattern": "cloudripper.youneek.dev", "custom_domain": true }]
+}
