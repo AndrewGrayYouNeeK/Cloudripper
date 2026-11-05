@@ -59,8 +59,17 @@ func (a *AWSExplorer) Fetch(ctx context.Context) (Snapshot, error) {
 	snap.TotalUSD = total
 	snap.Warnings = append(snap.Warnings, warnings...)
 
+	// Resource-level data is only available for the last 14 days and AWS
+	// requires a filter, so skip it when no region is set (--all-regions).
+	if a.Region == "" {
+		return snap, nil
+	}
+	resStart := start
+	if min := end.AddDate(0, 0, -14); resStart.Before(min) {
+		resStart = min
+	}
 	resources, err := a.API.GetCostAndUsageWithResources(ctx, &costexplorer.GetCostAndUsageWithResourcesInput{
-		TimePeriod:  dateInterval(start, end),
+		TimePeriod:  dateInterval(resStart, end),
 		Granularity: cetypes.GranularityDaily,
 		Metrics:     []string{"UnblendedCost"},
 		GroupBy: []cetypes.GroupDefinition{{
@@ -73,7 +82,7 @@ func (a *AWSExplorer) Fetch(ctx context.Context) (Snapshot, error) {
 		if costExplorerDisabled(err.Error()) {
 			snap.Warnings = append(snap.Warnings, FormatCostExplorerError(err))
 		} else {
-			snap.Warnings = append(snap.Warnings, "resource-level cost explorer data unavailable: "+err.Error())
+			snap.Warnings = append(snap.Warnings, "per-resource costs unavailable (Cost Explorer resource-level data may not be enabled yet); using estimates")
 		}
 		return snap, nil
 	}
