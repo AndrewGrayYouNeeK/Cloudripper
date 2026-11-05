@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"errors"
 	"os"
 	"strings"
 	"testing"
@@ -311,5 +312,70 @@ func TestUnknownOutputFormat(t *testing.T) {
 	_, _, err := runCLI(t, "--output", "xml", "rip")
 	if err == nil || !strings.Contains(err.Error(), "xml") {
 		t.Fatalf("expected format error, got %v", err)
+	}
+}
+
+func TestMissingCredentialsGivesFriendlyError(t *testing.T) {
+	awsErr := errors.New("aws: ec2: operation error EC2: DescribeInstances, get identity: get credentials: failed to refresh cached credentials, no EC2 IMDS role found, operation error ec2imds: GetMetadata, request canceled, context deadline exceeded")
+	useRuntime(t, nil, awsErr, nil, nil)
+
+	for _, command := range []string{"rip", "cost", "optimize"} {
+		out, stderr, err := runCLI(t, command)
+		if err == nil {
+			t.Fatalf("%s: expected an error without credentials", command)
+		}
+		if !isCredentialsError(err) {
+			t.Fatalf("%s: expected a credentials error, got %v", command, err)
+		}
+		msg := err.Error()
+		for _, want := range []string{"AWS", "aws configure", "AWS_PROFILE", "gcloud auth application-default login", "az login", "README", "#readme"} {
+			if !strings.Contains(msg, want) {
+				t.Fatalf("%s: message missing %q:\n%s", command, want, msg)
+			}
+		}
+		for _, bad := range []string{"IMDS", "context deadline", "ec2imds", "DescribeInstances"} {
+			if strings.Contains(msg, bad) {
+				t.Fatalf("%s: message leaks SDK detail %q:\n%s", command, bad, msg)
+			}
+		}
+		if strings.Count(msg, "\n") > 8 {
+			t.Fatalf("%s: message is too long:\n%s", command, msg)
+		}
+		if strings.Contains(out+stderr, "Usage:") || strings.Contains(out+stderr, "Global Flags") {
+			t.Fatalf("%s: usage text should not print for a runtime error:\n%s%s", command, out, stderr)
+		}
+	}
+}
+
+func TestMissingCredentialsListsEachProvider(t *testing.T) {
+	err := friendlyScanError(errors.Join(
+		errors.New("aws: get credentials: failed to refresh cached credentials"),
+		errors.New("gcp: google: could not find default credentials"),
+		errors.New("azure: DefaultAzureCredential: failed to acquire a token"),
+	))
+	msg := err.Error()
+	for _, want := range []string{"AWS, Azure, GCP", "aws configure", "gcloud auth application-default login", "az login"} {
+		if !strings.Contains(msg, want) {
+			t.Fatalf("message missing %q:\n%s", want, msg)
+		}
+	}
+}
+
+func TestOtherScanErrorsStayAsTheyAre(t *testing.T) {
+	err := friendlyScanError(errors.New("aws: ec2: AccessDenied: not authorized"))
+	if isCredentialsError(err) || !strings.Contains(err.Error(), "scan failed") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestBadFlagStillShowsUsage(t *testing.T) {
+	useRuntime(t, nil, nil, nil, nil)
+	out, stderr, err := runCLI(t, "rip", "--no-such-flag")
+	stderr += out
+	if err == nil {
+		t.Fatal("expected an error for an unknown flag")
+	}
+	if !strings.Contains(stderr, "Usage:") {
+		t.Fatalf("usage should print for a bad flag, got %q", stderr)
 	}
 }

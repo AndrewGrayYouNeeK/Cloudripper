@@ -58,6 +58,7 @@ func resetCmdFlags(t *testing.T) {
 	rootCmd.SetIn(bytes.NewReader(nil))
 	var walk func(*cobra.Command)
 	walk = func(cmd *cobra.Command) {
+		cmd.SilenceUsage = false
 		resetFlagSet(t, cmd.Flags())
 		resetFlagSet(t, cmd.PersistentFlags())
 		for _, child := range cmd.Commands() {

@@ -30,6 +30,12 @@ Scan resources, pull actual spend when billing APIs are available, apply cost
 actions you confirm, scale instance groups, watch for cost spikes, and run
 chaos experiments with a blast-radius limit.
 No third-party backends. Just your clouds and this CLI.`,
+	// Errors are printed once by Execute. Usage is only shown for bad flags
+	// and arguments, not for failures that happen while a command runs.
+	SilenceErrors: true,
+	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
+		cmd.SilenceUsage = true
+	},
 }
 
 // Execute runs the root command.
