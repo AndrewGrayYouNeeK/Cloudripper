@@ -8,23 +8,24 @@ import (
 )
 
 var (
-	dryRun             bool
-	yes                bool
-	outputFmt          string
-	awsRegion          string
-	gcpProject         string
-	gcpRegionFlag      string
-	azureSubscription  string
-	azureResourceGroup string
-	auditLog           string
-	allRegions         bool
+	dryRun              bool
+	yes                 bool
+	outputFmt           string
+	awsRegion           string
+	gcpProject          string
+	gcpRegionFlag       string
+	azureSubscription   string
+	azureResourceGroup  string
+	cloudflareAccountID string
+	auditLog            string
+	allRegions          bool
 )
 
 // rootCmd is the base CLI command.
 var rootCmd = &cobra.Command{
 	Use:   "cloudripper",
 	Short: "Multi-cloud orchestration that scales, optimizes, and breaks things on purpose",
-	Long: `Cloudripper — multi-cloud orchestration for AWS, GCP, and Azure.
+	Long: `Cloudripper — multi-cloud orchestration for AWS, GCP, Azure, and Cloudflare.
 
 Scan resources, pull actual spend when billing APIs are available, apply cost
 actions you confirm, scale instance groups, watch for cost spikes, and run
@@ -56,5 +57,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&gcpRegionFlag, "gcp-region", "", "GCP region (default: GCP_REGION env or us-central1)")
 	rootCmd.PersistentFlags().StringVar(&azureSubscription, "azure-subscription", "", "Azure subscription ID (default: AZURE_SUBSCRIPTION_ID)")
 	rootCmd.PersistentFlags().StringVar(&azureResourceGroup, "azure-resource-group", "", "optional Azure resource group filter")
+	rootCmd.PersistentFlags().StringVar(&cloudflareAccountID, "cloudflare-account", "", "Cloudflare account ID (default: CLOUDFLARE_ACCOUNT_ID)")
 	rootCmd.PersistentFlags().StringVar(&auditLog, "audit-log", "", "append-only JSONL audit log (default: CLOUDRIPPER_AUDIT_LOG or cloudripper-audit.log)")
 }

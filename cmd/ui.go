@@ -193,6 +193,16 @@ func skippedProviders(cfg config.Config) []string {
 	if strings.TrimSpace(cfg.AzureSubscription) == "" {
 		lines = append(lines, "skipped: Azure subscription is not set (set AZURE_SUBSCRIPTION_ID or --azure-subscription)")
 	}
+	account := strings.TrimSpace(cfg.CloudflareAccountID)
+	token := strings.TrimSpace(cfg.CloudflareAPIToken)
+	switch {
+	case account == "" && token == "":
+		lines = append(lines, "skipped: Cloudflare is not set (set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN)")
+	case account == "":
+		lines = append(lines, "skipped: Cloudflare account id is not set (set CLOUDFLARE_ACCOUNT_ID or --cloudflare-account)")
+	case token == "":
+		lines = append(lines, "skipped: Cloudflare API token is not set (set CLOUDFLARE_API_TOKEN)")
+	}
 	return lines
 }
 
@@ -231,6 +241,8 @@ func humanizeScanLine(line string) string {
 		return "skipped: GCP credentials are not available (set application default credentials)"
 	case strings.Contains(lower, "azure") && (strings.Contains(lower, "credential") || strings.Contains(lower, "defaultazurecredential")):
 		return "skipped: Azure credentials are not available (set Azure CLI or environment credentials)"
+	case strings.Contains(lower, "cloudflare") && (strings.Contains(lower, "api token not configured") || strings.Contains(lower, "account id not configured") || strings.Contains(lower, "permission denied") || strings.Contains(lower, "unauthorized")):
+		return "skipped: Cloudflare credentials are not available or lack permission (set CLOUDFLARE_ACCOUNT_ID and a read-scoped CLOUDFLARE_API_TOKEN)"
 	default:
 		return "warning: " + line
 	}

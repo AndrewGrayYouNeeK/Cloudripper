@@ -124,3 +124,21 @@ func TestExecuteProtectAndIaC(t *testing.T) {
 		t.Fatalf("force records = %+v calls %d", records, exec.calls)
 	}
 }
+
+func TestExecuteCloudflareUnsupported(t *testing.T) {
+	cf := cloud.NewCloudflareProviderWith("acct", nil)
+	records, err := Execute(context.Background(), []optimizer.Recommendation{{
+		Resource: cloud.Resource{ID: "api", Name: "api", Provider: "cloudflare", Type: cloud.ResourceCFWorker},
+		Action:   optimizer.ActionTerminate,
+		Savings:  0,
+	}}, []cloud.Executor{cf}, Options{Confirmer: YesConfirmer{}, Command: "optimize"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(records) != 1 || records[0].Outcome != OutcomeUnsupported {
+		t.Fatalf("records = %+v", records)
+	}
+	if !strings.Contains(records[0].Detail, "read-only") {
+		t.Fatalf("detail = %s", records[0].Detail)
+	}
+}

@@ -125,6 +125,8 @@ func providerForSource(source string) string {
 		return "gcp"
 	case cloud.CostSourceAzure, "azure":
 		return "azure"
+	case cloud.CostSourceCloudflareBilling, "cloudflare":
+		return "cloudflare"
 	default:
 		return ""
 	}

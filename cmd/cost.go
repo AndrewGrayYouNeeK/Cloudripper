@@ -11,12 +11,15 @@ import (
 var costCmd = &cobra.Command{
 	Use:   "cost",
 	Short: "Show estimated inventory cost and actual trailing spend",
-	Long: `Pulls AWS Cost Explorer, a GCP Cloud Billing BigQuery export, and Azure Cost
-Management when those sources are configured. A source that fails is reported
-as a warning and the command keeps the built-in estimate for that cloud.
+	Long: `Pulls AWS Cost Explorer, a GCP Cloud Billing BigQuery export, Azure Cost
+Management, and Cloudflare account billing history when those sources are
+configured. A source that fails is reported as a warning and the command keeps
+the built-in estimate for that cloud.
 
 Actual totals are account spend over the trailing 30 days. Estimated totals
-are the sum of per-resource price heuristics. They are not the same number.`,
+are the sum of per-resource price heuristics. They are not the same number.
+Cloudflare actuals are invoice/billing-history rows (Billing Read), not
+per-resource usage analytics.`,
 	RunE: runCost,
 }
 

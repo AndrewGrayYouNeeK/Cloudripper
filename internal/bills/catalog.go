@@ -100,12 +100,13 @@ func Catalog() []Provider {
 }
 
 // Accounts says which catalog providers CloudRipper is already set up to scan.
-// AWS is always scanned. GCP and Azure count only when a project or subscription is set.
+// AWS is always scanned. GCP, Azure, and Cloudflare count only when configured.
 // Every other provider is possibly forgotten.
 type Accounts struct {
-	AWS   bool
-	GCP   bool
-	Azure bool
+	AWS        bool
+	GCP        bool
+	Azure      bool
+	Cloudflare bool
 }
 
 // Has reports whether CloudRipper is configured for the provider id.
@@ -117,6 +118,8 @@ func (a Accounts) Has(id string) bool {
 		return a.GCP
 	case "azure":
 		return a.Azure
+	case "cloudflare":
+		return a.Cloudflare
 	default:
 		return false
 	}

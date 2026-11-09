@@ -10,10 +10,11 @@ import (
 
 var ripCmd = &cobra.Command{
 	Use:   "rip",
-	Short: "Scan AWS, GCP, and Azure and report what is running",
-	Long: `Connects to configured clouds, discovers compute, storage, network, and
-Kubernetes inventory, and overlays actual spend when billing APIs respond.
-Resource costs stay on the built-in estimate when a billing source is unavailable.`,
+	Short: "Scan AWS, GCP, Azure, and Cloudflare and report what is running",
+	Long: `Connects to configured clouds, discovers compute, storage, network,
+Kubernetes, and Cloudflare developer-platform inventory, and overlays actual
+spend when billing APIs respond. Resource costs stay on the built-in estimate
+when a billing source is unavailable.`,
 	RunE: runRip,
 }
 
