@@ -89,7 +89,7 @@ type resourceRow struct {
 	Region     string            `json:"region"`
 	Status     string            `json:"status"`
 	Spec       string            `json:"spec,omitempty"`
-	CostUSD    float64           `json:"cost_usd"`
+	CostUSD    *float64          `json:"cost_usd"`
 	CostSource string            `json:"cost_source,omitempty"`
 	Tags       map[string]string `json:"tags,omitempty"`
 }
@@ -97,7 +97,7 @@ type resourceRow struct {
 func rowsFromResources(resources []cloud.Resource) []resourceRow {
 	rows := make([]resourceRow, 0, len(resources))
 	for _, r := range resources {
-		rows = append(rows, resourceRow{
+		row := resourceRow{
 			Provider:   r.Provider,
 			Type:       string(r.Type),
 			ID:         r.ID,
@@ -105,10 +105,14 @@ func rowsFromResources(resources []cloud.Resource) []resourceRow {
 			Region:     r.Region,
 			Status:     r.Status,
 			Spec:       r.Spec,
-			CostUSD:    r.CostUSD,
 			CostSource: r.CostSource,
 			Tags:       r.Tags,
-		})
+		}
+		if r.CostPriced() {
+			v := r.CostUSD
+			row.CostUSD = &v
+		}
+		rows = append(rows, row)
 	}
 	return rows
 }
@@ -117,6 +121,12 @@ func resourceTable(rows []resourceRow) ([]string, [][]string) {
 	headers := []string{"PROVIDER", "TYPE", "ID", "NAME", "REGION", "STATUS", "SPEC", "USD", "SOURCE"}
 	out := make([][]string, 0, len(rows))
 	for _, row := range rows {
+		usd := "n/a"
+		if row.CostUSD != nil {
+			usd = fmt.Sprintf("%.2f", *row.CostUSD)
+		} else if row.CostSource == "" {
+			usd = "0.00"
+		}
 		out = append(out, []string{
 			row.Provider,
 			row.Type,
@@ -125,7 +135,7 @@ func resourceTable(rows []resourceRow) ([]string, [][]string) {
 			row.Region,
 			row.Status,
 			row.Spec,
-			fmt.Sprintf("%.2f", row.CostUSD),
+			usd,
 			row.CostSource,
 		})
 	}
@@ -164,7 +174,16 @@ func loadResolution(cmd *cobra.Command) (config.Config, cost.Resolution, error) 
 	res, cerr := rt.costs(ctx, cfg, resources)
 	if cerr != nil {
 		warnf(cmd, "%v", cerr)
-		res = cost.Resolution{Resources: resources, EstimatedTotal: sumCost(resources)}
+		unpriced := 0
+		for _, r := range resources {
+			if !r.CostPriced() {
+				unpriced++
+			}
+		}
+		res = cost.Resolution{Resources: resources, EstimatedTotal: sumCost(resources), UnpricedCount: unpriced}
+		if unpriced > 0 {
+			res.Warnings = []string{fmt.Sprintf("estimated_total excludes %d unpriced resource(s); per-resource cost is unavailable for those rows (not a $0 estimate)", unpriced)}
+		}
 	}
 	format, ferr := outputFormat()
 	if ferr != nil {
@@ -251,6 +270,9 @@ func humanizeScanLine(line string) string {
 func sumCost(resources []cloud.Resource) float64 {
 	var total float64
 	for _, r := range resources {
+		if !r.CostPriced() {
+			continue
+		}
 		total += r.CostUSD
 	}
 	return total

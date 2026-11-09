@@ -18,7 +18,8 @@ const (
 )
 
 // CostSourceCloudflareBilling labels invoice/billing-history charges from
-// GET /accounts/{account_id}/billing/history. It is not resource-level usage.
+// GET /accounts/{account_id}/billing/history. It is account-level invoice data
+// filtered by occurred_at, not resource-level usage metering.
 const CostSourceCloudflareBilling = "billing-history"
 
 // CloudflareLister lists account inventory. Tests fake this; CloudflareAPI implements it.
@@ -168,9 +169,11 @@ func InventoryCloudflare(ctx context.Context, lister CloudflareLister) (Cloudfla
 }
 
 // ResourcesFromCloudflare converts inventory into Resource rows.
-// CostUSD stays 0 with CostSourceEstimate: Cloudflare products are usage-based
-// and inventory alone does not yield a reliable flat monthly price. Actual
-// invoice charges are overlaid separately when Billing Read works.
+// Per-resource cost is CostSourceUnpriced (not a $0 estimate): Cloudflare
+// products are usage-based and inventory alone does not yield a reliable
+// monthly price. Account invoice charges may appear separately under
+// CostSourceCloudflareBilling when Billing Read works; they are not mapped
+// onto individual Workers/R2/KV/D1/Pages rows.
 func ResourcesFromCloudflare(inv CloudflareInventory) []Resource {
 	var resources []Resource
 	for _, script := range inv.Workers {
@@ -189,7 +192,7 @@ func ResourcesFromCloudflare(inv CloudflareInventory) []Resource {
 			Status:     status,
 			Spec:       spec,
 			CostUSD:    0,
-			CostSource: CostSourceEstimate,
+			CostSource: CostSourceUnpriced,
 			Metadata: map[string]string{
 				"created_on":  script.CreatedOn,
 				"modified_on": script.ModifiedOn,
@@ -214,7 +217,7 @@ func ResourcesFromCloudflare(inv CloudflareInventory) []Resource {
 			Status:     "listed",
 			Spec:       firstNonEmpty(bucket.StorageClass, "Standard"),
 			CostUSD:    0,
-			CostSource: CostSourceEstimate,
+			CostSource: CostSourceUnpriced,
 			Metadata: map[string]string{
 				"jurisdiction":  jurisdiction,
 				"creation_date": bucket.CreationDate,
@@ -234,7 +237,7 @@ func ResourcesFromCloudflare(inv CloudflareInventory) []Resource {
 			Region:     firstNonEmpty(ns.Jurisdiction, "account"),
 			Status:     "listed",
 			CostUSD:    0,
-			CostSource: CostSourceEstimate,
+			CostSource: CostSourceUnpriced,
 			Metadata: map[string]string{
 				"jurisdiction": ns.Jurisdiction,
 			},
@@ -254,7 +257,7 @@ func ResourcesFromCloudflare(inv CloudflareInventory) []Resource {
 			Status:     firstNonEmpty(db.Version, "listed"),
 			Spec:       db.Version,
 			CostUSD:    0,
-			CostSource: CostSourceEstimate,
+			CostSource: CostSourceUnpriced,
 			Metadata: map[string]string{
 				"created_at":   db.CreatedAt,
 				"jurisdiction": db.Jurisdiction,
@@ -275,7 +278,7 @@ func ResourcesFromCloudflare(inv CloudflareInventory) []Resource {
 			Status:     "listed",
 			Spec:       project.ProductionBranch,
 			CostUSD:    0,
-			CostSource: CostSourceEstimate,
+			CostSource: CostSourceUnpriced,
 			Metadata: map[string]string{
 				"subdomain":  project.Subdomain,
 				"created_on": project.CreatedOn,

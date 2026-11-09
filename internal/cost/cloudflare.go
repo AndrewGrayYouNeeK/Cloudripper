@@ -17,15 +17,23 @@ type CloudflareBillingAPI interface {
 // CloudflareBilling reads invoice/billing-history charges for one account.
 //
 // Source: GET /accounts/{account_id}/billing/history
-// Required token permission: Billing Read
-// (https://developers.cloudflare.com/api/resources/billing/subresources/history/methods/list/)
+// Auth: API token Bearer (preferred) or legacy email+key per Cloudflare API docs
+// Required token permission: Billing Read (Account > Billing > Read)
+// Docs:
+//   - https://developers.cloudflare.com/api/resources/billing/subresources/history/methods/list/
+//   - https://developers.cloudflare.com/billing/understand/billing-permissions/
 //
-// Caveats (as of the Cloudflare API docs used for this integration):
+// Semantics / limitations:
 //   - Rows are billing-history / invoice items, not resource-level usage meters.
-//   - Workers Analytics, GraphQL usage, or dashboard graphs are NOT treated as spend.
-//   - Only USD amounts inside the trailing Window() are summed.
-//   - Non-USD currencies are skipped and reported as warnings.
-//   - Missing Billing Read yields an unavailable warning, never a fabricated $0 actual.
+//   - The list endpoint has no date-range query; CloudRipper pages results and
+//     keeps items whose occurred_at falls in Window() [start, end).
+//   - Only items with currency exactly USD are summed; missing/other currencies
+//     are skipped with warnings (never assumed USD).
+//   - Workers Analytics / GraphQL usage are never treated as invoiced spend.
+//   - Auth/permission failures return an error so Resolve keeps ActualAvailable
+//     false for this source (never a fabricated $0 actual).
+//   - Per-resource Cloudflare rows stay CostSourceUnpriced; this snapshot is
+//     account-level only.
 type CloudflareBilling struct {
 	API CloudflareBillingAPI
 	Now func() time.Time
@@ -51,7 +59,7 @@ func (c *CloudflareBilling) Fetch(ctx context.Context) (Snapshot, error) {
 	}
 	items, err := c.API.ListBillingHistory(ctx)
 	if err != nil {
-		return Snapshot{}, fmt.Errorf("cloudflare billing history unavailable (needs Account Billing Read): %w", err)
+		return Snapshot{}, fmt.Errorf("cloudflare billing history unavailable (needs Account Billing Read on the API token): %w", err)
 	}
 	nowFn := time.Now
 	if c.Now != nil {
@@ -61,31 +69,35 @@ func (c *CloudflareBilling) Fetch(ctx context.Context) (Snapshot, error) {
 	return ParseCloudflareBillingHistory(items, start, end), nil
 }
 
-// ParseCloudflareBillingHistory sums USD charge amounts inside [start, end).
+// ParseCloudflareBillingHistory sums USD invoice/charge amounts with
+// occurred_at in [start, end).
 func ParseCloudflareBillingHistory(items []cloud.CloudflareBillingItem, start, end time.Time) Snapshot {
 	snap := Snapshot{
 		Source: cloud.CostSourceCloudflareBilling,
 		Warnings: []string{
-			"cloudflare billing-history is invoice/charge rows from GET /accounts/{account_id}/billing/history, not per-resource usage; resource rows keep estimate ($0) unless a future export matches them",
+			"cloudflare billing-history is account invoice/charge rows from GET /accounts/{account_id}/billing/history filtered by occurred_at; not per-resource usage. Cloudflare inventory rows stay unpriced",
 		},
 	}
 	serviceTotals := map[string]float64{}
 	for _, item := range items {
 		occurred, err := cloud.ParseCloudflareTime(item.OccurredAt)
 		if err != nil {
+			snap.Warnings = appendWarning(snap.Warnings, fmt.Sprintf("skipped cloudflare billing item %s: invalid occurred_at", item.ID))
 			continue
 		}
 		if occurred.Before(start) || !occurred.Before(end) {
 			continue
 		}
 		currency := strings.TrimSpace(item.Currency)
-		if currency != "" && !strings.EqualFold(currency, "USD") {
-			snap.Warnings = appendWarning(snap.Warnings, fmt.Sprintf("skipped non-USD cloudflare billing item %s (%s)", item.ID, currency))
+		if !strings.EqualFold(currency, "USD") {
+			label := currency
+			if label == "" {
+				label = "missing"
+			}
+			snap.Warnings = appendWarning(snap.Warnings, fmt.Sprintf("skipped non-USD cloudflare billing item %s (%s)", item.ID, label))
 			continue
 		}
 		amount := item.Amount
-		// Prefer explicit charge-like rows; still accept amount when type is empty
-		// because the API examples use type=charge with amount set.
 		if strings.EqualFold(item.Type, "credit") || strings.EqualFold(item.Type, "refund") {
 			amount = -absFloat(amount)
 		}

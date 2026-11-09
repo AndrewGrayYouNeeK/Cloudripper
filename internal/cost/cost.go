@@ -43,6 +43,7 @@ type Resolution struct {
 	Snapshots       []Snapshot       `json:"snapshots,omitempty"`
 	Warnings        []string         `json:"warnings,omitempty"`
 	EstimatedTotal  float64          `json:"estimated_total"`
+	UnpricedCount   int              `json:"unpriced_count,omitempty"`
 	ActualTotal     float64          `json:"actual_total"`
 	ActualAvailable bool             `json:"actual_available"`
 }
@@ -53,6 +54,13 @@ func Resolve(ctx context.Context, resources []cloud.Resource, sources []Source) 
 	res := Resolution{
 		Resources:      cloneResources(resources),
 		EstimatedTotal: sumCost(resources),
+		UnpricedCount:  countUnpriced(resources),
+	}
+	if res.UnpricedCount > 0 {
+		res.Warnings = appendWarning(res.Warnings, fmt.Sprintf(
+			"estimated_total excludes %d unpriced resource(s); per-resource cost is unavailable for those rows (not a $0 estimate)",
+			res.UnpricedCount,
+		))
 	}
 	for _, src := range sources {
 		if src == nil {
@@ -86,9 +94,22 @@ func cloneResources(in []cloud.Resource) []cloud.Resource {
 func sumCost(resources []cloud.Resource) float64 {
 	var total float64
 	for _, r := range resources {
+		if !r.CostPriced() {
+			continue
+		}
 		total += r.CostUSD
 	}
 	return total
+}
+
+func countUnpriced(resources []cloud.Resource) int {
+	var n int
+	for _, r := range resources {
+		if !r.CostPriced() {
+			n++
+		}
+	}
+	return n
 }
 
 func applySnapshot(res *Resolution, snap Snapshot) {
@@ -135,9 +156,17 @@ func providerForSource(source string) string {
 // Summary renders actuals versus the estimate fallback for humans.
 func Summary(res Resolution) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "Estimated resource total: $%.2f\n", res.EstimatedTotal)
+	fmt.Fprintf(&b, "Estimated resource total: $%.2f", res.EstimatedTotal)
+	if res.UnpricedCount > 0 {
+		fmt.Fprintf(&b, " (%d unpriced excluded; coverage incomplete)", res.UnpricedCount)
+	}
+	b.WriteString("\n")
 	if !res.ActualAvailable {
-		b.WriteString("Actual spend: unavailable, using estimates\n")
+		if res.UnpricedCount > 0 {
+			b.WriteString("Actual spend: unavailable; unpriced rows are not treated as $0\n")
+		} else {
+			b.WriteString("Actual spend: unavailable, using estimates\n")
+		}
 	} else {
 		fmt.Fprintf(&b, "Actual spend (trailing window): $%.2f\n", noNegZero(res.ActualTotal))
 		for _, snap := range res.Snapshots {
@@ -145,7 +174,13 @@ func Summary(res Resolution) string {
 			if len(snap.Resources) > 0 {
 				fmt.Fprintf(&b, ", %d resources", len(snap.Resources))
 			}
+			if snap.Source == cloud.CostSourceCloudflareBilling {
+				b.WriteString(" (account invoice/billing-history by occurred_at; not per-resource)")
+			}
 			b.WriteString("\n")
+		}
+		if res.UnpricedCount > 0 {
+			fmt.Fprintf(&b, "Note: %d resource row(s) remain unpriced; estimate total covers only priced inventory\n", res.UnpricedCount)
 		}
 	}
 	return b.String()

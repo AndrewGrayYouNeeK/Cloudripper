@@ -80,7 +80,7 @@ func TestCloudflareScanInventoryAndPagination(t *testing.T) {
 		t.Fatalf("resources = %d %+v", len(resources), resources)
 	}
 	for _, r := range resources {
-		if r.Provider != "cloudflare" || r.CostSource != CostSourceEstimate || r.CostUSD != 0 {
+		if r.Provider != "cloudflare" || r.CostSource != CostSourceUnpriced || r.CostPriced() || r.CostUSD != 0 {
 			t.Fatalf("resource = %+v", r)
 		}
 	}

@@ -303,21 +303,22 @@ func TestBuildProvidersIncludesCloudflare(t *testing.T) {
 func TestCloudflareCostUnavailableWarning(t *testing.T) {
 	prev := rt
 	t.Cleanup(func() { rt = prev })
-	warning := "billing-history: cloudflare billing history unavailable (needs Account Billing Read): permission denied"
+	warning := "billing-history: cloudflare billing history unavailable (needs Account Billing Read on the API token): permission denied"
 	rt = runtime{
 		scan: func(context.Context, config.Config) ([]cloud.Resource, error) {
 			return []cloud.Resource{{
-				ID: "api", Provider: "cloudflare", Type: cloud.ResourceCFWorker, Status: "active", CostUSD: 0, CostSource: cloud.CostSourceEstimate,
+				ID: "api", Provider: "cloudflare", Type: cloud.ResourceCFWorker, Status: "active", CostUSD: 0, CostSource: cloud.CostSourceUnpriced,
 			}}, nil
 		},
 		costs: func(context.Context, config.Config, []cloud.Resource) (cost.Resolution, error) {
 			return cost.Resolution{
 				Resources: []cloud.Resource{{
-					ID: "api", Provider: "cloudflare", Type: cloud.ResourceCFWorker, CostUSD: 0, CostSource: cloud.CostSourceEstimate,
+					ID: "api", Provider: "cloudflare", Type: cloud.ResourceCFWorker, CostUSD: 0, CostSource: cloud.CostSourceUnpriced,
 				}},
 				EstimatedTotal:  0,
+				UnpricedCount:   1,
 				ActualAvailable: false,
-				Warnings:        []string{warning},
+				Warnings:        []string{warning, "estimated_total excludes 1 unpriced resource(s); per-resource cost is unavailable for those rows (not a $0 estimate)"},
 			}, nil
 		},
 		executors: func(context.Context, config.Config) ([]cloud.Executor, error) { return nil, nil },
@@ -335,6 +336,41 @@ func TestCloudflareCostUnavailableWarning(t *testing.T) {
 	}
 	if !strings.Contains(out, "Actual spend: unavailable") {
 		t.Fatalf("output = %s", out)
+	}
+	if !strings.Contains(out, "n/a") || !strings.Contains(out, "unpriced") {
+		t.Fatalf("expected unpriced/n/a presentation, got:\n%s", out)
+	}
+}
+
+func TestCloudflareUnpricedJSONNullCost(t *testing.T) {
+	resources := []cloud.Resource{
+		{ID: "api", Provider: "cloudflare", Type: cloud.ResourceCFWorker, Status: "active", CostUSD: 0, CostSource: cloud.CostSourceUnpriced},
+		{ID: "i-1", Provider: "aws", Type: cloud.ResourceEC2, Status: "running", CostUSD: 10, CostSource: cloud.CostSourceEstimate},
+	}
+	prev := rt
+	t.Cleanup(func() { rt = prev })
+	rt = runtime{
+		scan: func(context.Context, config.Config) ([]cloud.Resource, error) {
+			return resources, nil
+		},
+		costs: func(_ context.Context, _ config.Config, got []cloud.Resource) (cost.Resolution, error) {
+			return cost.Resolve(context.Background(), got, nil), nil
+		},
+		executors: func(context.Context, config.Config) ([]cloud.Executor, error) { return nil, nil },
+		scalers:   func(context.Context, config.Config) ([]scale.Controller, error) { return nil, nil },
+	}
+	out, _, err := runCLI(t, "--output", "json", "rip")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, `"cost_usd": null`) || !strings.Contains(out, `"cost_source": "unpriced"`) {
+		t.Fatalf("expected null unpriced cost, got %s", out)
+	}
+	if !strings.Contains(out, `"estimated_total": 10`) || !strings.Contains(out, `"unpriced_count": 1`) {
+		t.Fatalf("mixed totals incomplete coverage missing: %s", out)
+	}
+	if !strings.Contains(out, `"cost_usd": 10`) {
+		t.Fatalf("aws priced row should keep numeric cost: %s", out)
 	}
 }
 

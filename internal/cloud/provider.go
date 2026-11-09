@@ -40,10 +40,17 @@ const (
 // Cost source labels stored on Resource.CostSource.
 const (
 	CostSourceEstimate = "estimate"
+	CostSourceUnpriced = "unpriced"
 	CostSourceAWS      = "cost-explorer"
 	CostSourceGCP      = "bigquery"
 	CostSourceAzure    = "azure-cost"
 )
+
+// CostPriced reports whether CostUSD is a priced value that belongs in estimate
+// totals. Unpriced rows mean cost is unknown/unavailable, not a $0 estimate.
+func (r Resource) CostPriced() bool {
+	return r.CostSource != CostSourceUnpriced
+}
 
 // Resource represents a discovered cloud asset.
 type Resource struct {
