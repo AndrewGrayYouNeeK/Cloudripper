@@ -16,6 +16,7 @@ const (
 	FormatTable Format = "table"
 	FormatJSON  Format = "json"
 	FormatCSV   Format = "csv"
+	FormatHTML  Format = "html"
 )
 
 // Parse resolves a format name.
@@ -27,8 +28,10 @@ func Parse(value string) (Format, error) {
 		return FormatJSON, nil
 	case "csv":
 		return FormatCSV, nil
+	case "html":
+		return FormatHTML, nil
 	default:
-		return "", fmt.Errorf("unknown output format %q (want table, json, or csv)", value)
+		return "", fmt.Errorf("unknown output format %q (want table, json, csv, or html)", value)
 	}
 }
 

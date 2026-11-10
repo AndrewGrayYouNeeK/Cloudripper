@@ -153,6 +153,14 @@ func render(cmd *cobra.Command, headers []string, rows [][]string, payload any) 
 		return output.WriteJSON(w, payload)
 	case output.FormatCSV:
 		return output.WriteCSV(w, headers, rows)
+	case output.FormatHTML:
+		return output.WriteHTML(w, output.HTMLReport{
+			Title: "cloudripper",
+			Sections: []output.HTMLSection{{
+				Headers: headers,
+				Rows:    rows,
+			}},
+		})
 	case output.FormatTable:
 		return output.WriteTable(w, headers, rows)
 	default:

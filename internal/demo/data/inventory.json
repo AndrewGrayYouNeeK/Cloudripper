@@ -1,0 +1,209 @@
+{
+  "fictional": true,
+  "disclaimer": "FICTIONAL SAMPLE DATA. These resources, costs, and savings figures are made up for the zero-credential demo. They are not your cloud spend and not real savings.",
+  "resources": [
+    {
+      "id": "i-sample-web",
+      "name": "sample-web",
+      "provider": "aws",
+      "type": "ec2",
+      "region": "us-east-1",
+      "status": "running",
+      "spec": "t3.xlarge",
+      "cost_usd": 120,
+      "cost_source": "estimate"
+    },
+    {
+      "id": "i-sample-batch",
+      "name": "sample-batch",
+      "provider": "aws",
+      "type": "ec2",
+      "region": "us-east-1",
+      "status": "running",
+      "spec": "t3.micro",
+      "cost_usd": 8,
+      "cost_source": "estimate"
+    },
+    {
+      "id": "i-sample-stopped",
+      "name": "sample-stopped",
+      "provider": "aws",
+      "type": "ec2",
+      "region": "us-east-1",
+      "status": "stopped",
+      "spec": "t3.small",
+      "cost_usd": 6,
+      "cost_source": "estimate"
+    },
+    {
+      "id": "vol-sample-orphan",
+      "name": "sample-orphan-volume",
+      "provider": "aws",
+      "type": "ebs",
+      "region": "us-east-1",
+      "status": "available",
+      "spec": "gp3",
+      "cost_usd": 5,
+      "cost_source": "estimate"
+    },
+    {
+      "id": "eipalloc-sample",
+      "name": "sample-unused-eip",
+      "provider": "aws",
+      "type": "eip",
+      "region": "us-east-1",
+      "status": "unattached",
+      "spec": "ipv4",
+      "cost_usd": 3.5,
+      "cost_source": "estimate"
+    },
+    {
+      "id": "arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/sample-idle/000",
+      "name": "sample-idle-lb",
+      "provider": "aws",
+      "type": "elb",
+      "region": "us-east-1",
+      "status": "idle",
+      "spec": "application",
+      "cost_usd": 18,
+      "cost_source": "estimate"
+    },
+    {
+      "id": "i-sample-protected",
+      "name": "sample-protected",
+      "provider": "aws",
+      "type": "ec2",
+      "region": "us-east-1",
+      "status": "running",
+      "spec": "m5.xlarge",
+      "cost_usd": 200,
+      "cost_source": "estimate",
+      "tags": {"cloudripper:protect": "true"}
+    },
+    {
+      "id": "sample-gce",
+      "name": "sample-gce",
+      "provider": "gcp",
+      "type": "gce",
+      "region": "us-central1",
+      "status": "running",
+      "spec": "e2-standard-4",
+      "cost_usd": 110,
+      "cost_source": "estimate"
+    },
+    {
+      "id": "sample-disk",
+      "name": "sample-orphan-disk",
+      "provider": "gcp",
+      "type": "gcp-disk",
+      "region": "us-central1",
+      "status": "unattached",
+      "spec": "pd-balanced",
+      "cost_usd": 4,
+      "cost_source": "estimate"
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/sample/providers/Microsoft.Compute/virtualMachines/sample-vm",
+      "name": "sample-vm",
+      "provider": "azure",
+      "type": "azure-vm",
+      "region": "eastus",
+      "status": "running",
+      "spec": "Standard_D4s_v3",
+      "cost_usd": 140,
+      "cost_source": "estimate"
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/sample/providers/Microsoft.Network/publicIPAddresses/sample-ip",
+      "name": "sample-unused-ip",
+      "provider": "azure",
+      "type": "azure-ip",
+      "region": "eastus",
+      "status": "unattached",
+      "spec": "ipv4",
+      "cost_usd": 2.5,
+      "cost_source": "estimate"
+    },
+    {
+      "id": "sample-worker",
+      "name": "sample-worker",
+      "provider": "cloudflare",
+      "type": "cf-worker",
+      "region": "account",
+      "status": "active",
+      "spec": "standard",
+      "cost_source": "unpriced"
+    },
+    {
+      "id": "sample-bucket",
+      "name": "sample-bucket",
+      "provider": "cloudflare",
+      "type": "cf-r2",
+      "region": "default",
+      "status": "listed",
+      "spec": "Standard",
+      "cost_source": "unpriced"
+    },
+    {
+      "id": "sample-kv",
+      "name": "sample-kv",
+      "provider": "cloudflare",
+      "type": "cf-kv",
+      "region": "account",
+      "status": "listed",
+      "cost_source": "unpriced"
+    },
+    {
+      "id": "sample-db",
+      "name": "sample-db",
+      "provider": "cloudflare",
+      "type": "cf-d1",
+      "region": "account",
+      "status": "listed",
+      "cost_source": "unpriced"
+    },
+    {
+      "id": "sample-pages",
+      "name": "sample-pages",
+      "provider": "cloudflare",
+      "type": "cf-pages",
+      "region": "account",
+      "status": "listed",
+      "spec": "main",
+      "cost_source": "unpriced"
+    }
+  ],
+  "snapshots": [
+    {
+      "source": "cost-explorer",
+      "total_usd": 186.4,
+      "services": [
+        {"service": "Sample EC2", "usd": 150},
+        {"service": "Sample S3", "usd": 36.4}
+      ]
+    },
+    {
+      "source": "bigquery",
+      "total_usd": 48.15,
+      "services": [
+        {"service": "Sample Compute Engine", "usd": 40},
+        {"service": "Sample Cloud Storage", "usd": 8.15}
+      ]
+    },
+    {
+      "source": "azure-cost",
+      "total_usd": 91,
+      "services": [
+        {"service": "Sample Virtual Machines", "usd": 80},
+        {"service": "Sample Bandwidth", "usd": 11}
+      ]
+    },
+    {
+      "source": "billing-history",
+      "total_usd": 12,
+      "services": [
+        {"service": "Sample Workers", "usd": 12}
+      ]
+    }
+  ]
+}

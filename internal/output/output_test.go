@@ -28,4 +28,36 @@ func TestParseAndCSV(t *testing.T) {
 	if !strings.Contains(buf.String(), `"ok": "yes"`) {
 		t.Fatalf("json = %s", buf.String())
 	}
+	htmlFormat, err := Parse("HTML")
+	if err != nil || htmlFormat != FormatHTML {
+		t.Fatalf("html format %s err %v", htmlFormat, err)
+	}
+}
+
+func TestWriteHTMLEscapesAndStaysOffline(t *testing.T) {
+	var buf bytes.Buffer
+	err := WriteHTML(&buf, HTMLReport{
+		Title:  `Costs <script>`,
+		Banner: `FICTIONAL "sample"`,
+		Notes:  []string{"Actual spend: unavailable"},
+		Sections: []HTMLSection{{
+			Heading: "Rows",
+			Headers: []string{"NAME", "USD"},
+			Rows:    [][]string{{`<script>alert(1)</script>`, "n/a"}},
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := buf.String()
+	for _, needle := range []string{"<script", "<img", "<link", "http://", "https://", "src="} {
+		if strings.Contains(got, needle) {
+			t.Fatalf("html contains %q:\n%s", needle, got)
+		}
+	}
+	for _, needle := range []string{"&lt;script&gt;", "unavailable", "n/a", "FICTIONAL"} {
+		if !strings.Contains(got, needle) {
+			t.Fatalf("html missing %q:\n%s", needle, got)
+		}
+	}
 }

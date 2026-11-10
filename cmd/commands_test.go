@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
@@ -442,6 +443,120 @@ func TestFindBillsCSV(t *testing.T) {
 	}
 	if strings.Contains(out2, "token-not-for-live-use") {
 		t.Fatal("token leaked into find-bills output")
+	}
+}
+
+func TestDemoFictionalSample(t *testing.T) {
+	useRuntime(t, nil, errors.New("demo must not scan"), nil, nil)
+	rt.scan = func(context.Context, config.Config) ([]cloud.Resource, error) {
+		t.Fatal("demo called the cloud scanner")
+		return nil, nil
+	}
+	rt.costs = func(context.Context, config.Config, []cloud.Resource) (cost.Resolution, error) {
+		t.Fatal("demo called the cost client")
+		return cost.Resolution{}, nil
+	}
+
+	out, stderr, err := runCLI(t, "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stderr != "" {
+		t.Fatalf("table demo should keep the banner on stdout, stderr=%q", stderr)
+	}
+	for _, needle := range []string{"FICTIONAL SAMPLE DATA", "not your cloud spend", "not real savings", "sample-worker", "n/a", "sample-protected"} {
+		if !strings.Contains(out, needle) {
+			t.Fatalf("table demo missing %q:\n%s", needle, out)
+		}
+	}
+	if strings.Contains(out, "] aws/sample-protected") {
+		t.Fatalf("protected sample was recommended:\n%s", out)
+	}
+
+	jsonOut, jsonErr, err := runCLI(t, "--output", "json", "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(jsonErr, "FICTIONAL SAMPLE DATA") {
+		t.Fatalf("json demo banner stderr=%q", jsonErr)
+	}
+	if !strings.Contains(jsonOut, `"fictional": true`) || !strings.Contains(jsonOut, `"network_calls": 0`) {
+		t.Fatalf("json demo = %s", jsonOut)
+	}
+	if strings.Contains(jsonOut, `"id": "i-sample-protected"`) {
+		// The protected instance stays in inventory. It must not be a recommendation.
+		rec := jsonOut[strings.Index(jsonOut, `"recommendations"`):]
+		if strings.Contains(rec, "i-sample-protected") {
+			t.Fatalf("protected resource recommended: %s", rec)
+		}
+	}
+	for _, bad := range []string{"http://", "https://"} {
+		if strings.Contains(jsonOut, bad) {
+			t.Fatalf("json demo contains %s", bad)
+		}
+	}
+
+	htmlOut, _, err := runCLI(t, "--output", "html", "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, needle := range []string{"FICTIONAL SAMPLE DATA", "n/a", "not real savings"} {
+		if !strings.Contains(htmlOut, needle) {
+			t.Fatalf("html demo missing %q", needle)
+		}
+	}
+	for _, bad := range []string{"<script", "http://", "https://", "src="} {
+		if strings.Contains(htmlOut, bad) {
+			t.Fatalf("html demo contains %s", bad)
+		}
+	}
+
+	csvOut, _, err := runCLI(t, "--output", "csv", "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(csvOut, "fictional") || !strings.Contains(csvOut, "sample-worker") {
+		t.Fatalf("csv demo = %s", csvOut)
+	}
+	if !strings.Contains(csvOut, "n/a") {
+		t.Fatalf("csv demo should show unpriced as n/a:\n%s", csvOut)
+	}
+}
+
+func TestFindBillsSample(t *testing.T) {
+	t.Setenv("CLOUDRIPPER_IMAP_HOST", "127.0.0.1")
+	t.Setenv("CLOUDRIPPER_IMAP_PORT", "1")
+	t.Setenv("CLOUDRIPPER_GMAIL_TOKEN", "")
+	out, stderr, err := runCLI(t, "find-bills", "--sample")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "FICTIONAL SAMPLE DATA") || !strings.Contains(out, "not real savings") {
+		t.Fatalf("sample bills = %s", out)
+	}
+	if stderr != "" {
+		t.Fatalf("table sample banner should be on stdout, stderr=%q", stderr)
+	}
+	if time.Since(time.Date(2026, 10, 28, 0, 0, 0, 0, time.UTC)) < 120*24*time.Hour {
+		if !strings.Contains(out, "DigitalOcean") || strings.Contains(strings.ToLower(out), "netflix") {
+			t.Fatalf("sample findings = %s", out)
+		}
+	}
+
+	jsonOut, jsonErr, err := runCLI(t, "--output", "json", "find-bills", "--sample")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(jsonErr, "FICTIONAL") || !strings.Contains(jsonOut, `"fictional": true`) || !strings.Contains(jsonOut, `"network_calls": 0`) {
+		t.Fatalf("json sample out=%s err=%s", jsonOut, jsonErr)
+	}
+	if strings.Contains(jsonOut, "FICTIONAL SAMPLE DATA") && !strings.Contains(jsonOut, `"banner"`) {
+		t.Fatal("json banner must be a field, not a prefix")
+	}
+
+	_, _, err = runCLI(t, "find-bills", "--sample", "--csv", "card.csv")
+	if err == nil || !strings.Contains(err.Error(), "--sample") {
+		t.Fatalf("expected --sample/--csv conflict, got %v", err)
 	}
 }
 
