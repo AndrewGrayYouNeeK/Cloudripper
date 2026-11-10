@@ -72,5 +72,5 @@ func runSchedule(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	return printApply(cmd, result, records)
+	return printApply(cmd, result, res, records)
 }

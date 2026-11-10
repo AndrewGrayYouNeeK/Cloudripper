@@ -9,9 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/bills"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cost"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/output"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/scale"
 )
 
@@ -557,6 +559,94 @@ func TestFindBillsSample(t *testing.T) {
 	_, _, err = runCLI(t, "find-bills", "--sample", "--csv", "card.csv")
 	if err == nil || !strings.Contains(err.Error(), "--sample") {
 		t.Fatalf("expected --sample/--csv conflict, got %v", err)
+	}
+}
+
+func TestHTMLReportsForSpendCommands(t *testing.T) {
+	useRuntime(t, []cloud.Resource{
+		{ID: "i-1", Name: "<script>", Provider: "aws", Type: cloud.ResourceEC2, Status: "running", CostUSD: 10, CostSource: cloud.CostSourceEstimate},
+		{ID: "w", Name: "worker", Provider: "cloudflare", Type: cloud.ResourceCFWorker, Status: "active", CostUSD: 0, CostSource: cloud.CostSourceUnpriced},
+	}, nil, nil, nil)
+
+	for _, command := range []string{"rip", "cost", "optimize"} {
+		out, _, err := runCLI(t, "--output", "html", command)
+		if err != nil {
+			t.Fatalf("%s: %v", command, err)
+		}
+		if !strings.Contains(out, "Actual spend: unavailable") {
+			t.Fatalf("%s html missing unavailable actual:\n%s", command, out)
+		}
+		if strings.Contains(out, "$0.00") || strings.Contains(out, "<script") || strings.Contains(out, "http://") || strings.Contains(out, "src=") {
+			t.Fatalf("%s html leaked a tag, a URL, or a zero actual:\n%s", command, out)
+		}
+		if !strings.Contains(out, "n/a") {
+			t.Fatalf("%s html missing n/a:\n%s", command, out)
+		}
+	}
+
+	ripOut, _, err := runCLI(t, "--output", "html", "rip")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(ripOut, "&lt;script&gt;") {
+		t.Fatalf("rip html did not escape the name:\n%s", ripOut)
+	}
+
+	prev := rt
+	t.Cleanup(func() { rt = prev })
+	rt.costs = func(_ context.Context, _ config.Config, got []cloud.Resource) (cost.Resolution, error) {
+		return cost.Resolution{Resources: got, EstimatedTotal: sumCost(got), ActualTotal: 12, ActualAvailable: true}, nil
+	}
+	costOut, _, err := runCLI(t, "--output", "html", "cost")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(costOut, "Actual spend: $12.00") || strings.Contains(costOut, "Actual spend: unavailable") {
+		t.Fatalf("available actual = %s", costOut)
+	}
+
+	help, _, err := runCLI(t, "--help")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(help, "table, json, csv, or html") {
+		t.Fatalf("help = %s", help)
+	}
+}
+
+func TestFindBillsHTMLEscapes(t *testing.T) {
+	t.Setenv("CLOUDRIPPER_IMAP_HOST", "")
+	t.Setenv("CLOUDRIPPER_GMAIL_TOKEN", "")
+	path := t.TempDir() + "/card.csv"
+	body := "Date,Description,Amount\n2026-09-02,DIGITALOCEAN.COM <script>alert(1)</script>,-15.00\n"
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, _, err := runCLI(t, "--output", "html", "find-bills", "--csv", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out, "<script") || strings.Contains(out, "http://") || strings.Contains(out, "src=") {
+		t.Fatalf("find-bills html = %s", out)
+	}
+	if !strings.Contains(out, "DigitalOcean") {
+		t.Fatalf("find-bills html = %s", out)
+	}
+
+	resetCmdFlags(t)
+	buf := &bytes.Buffer{}
+	rootCmd.SetOut(buf)
+	err = renderSampleBills(rootCmd, output.FormatHTML, []bills.Finding{{
+		Provider: "<script>alert(1)</script>",
+		Status:   "possibly forgotten",
+		Source:   "csv",
+		Amount:   1,
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(buf.String(), "<script") || !strings.Contains(buf.String(), "&lt;script&gt;") {
+		t.Fatalf("sample html = %s", buf.String())
 	}
 }
 

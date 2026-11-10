@@ -51,7 +51,7 @@ cloudripper find-bills --csv card-export.csv
 - **Forgotten bills.** `find-bills` reads billing mail (IMAP or Gmail, read-only) and a card CSV for AWS, Google Cloud, Azure, DigitalOcean, Linode/Akamai, Vercel, Netlify, Heroku, Cloudflare, Supabase, Firebase, MongoDB Atlas, and OpenAI, and flags the ones you have not set up.
 - **Scheduling, scaling, and cost alerts.** `schedule`, `scale`, and `watch` stop idle compute on a schedule, scale groups from CPU, and alert Slack or email on spend spikes.
 - **Bounded chaos tests.** `chaos` runs Chaos Mesh or Gremlin experiments inside a blast-radius limit, and refuses production-looking targets without `--allow-prod`.
-- **Output you can script.** `--output table|json|csv` on every command that prints rows.
+- **Output you can script.** `--output table|json|csv|html` on every command that prints rows. HTML is one self-contained file: no external assets, values are escaped, unpriced costs are `n/a`, and missing actuals are `unavailable` rather than `$0`.
 
 ## Free and paid
 
@@ -91,7 +91,7 @@ cloudripper rip --all-regions
 cloudripper find-bills --csv card-export.csv
 ```
 
-`--output table` (the default), `json`, or `csv` works on every command that prints rows. `CLOUDRIPPER_OUTPUT` sets the same value when the flag is omitted. CSV cells that start with `=`, `+`, `-`, or `@` are prefixed so spreadsheets do not treat them as formulas.
+`--output table` (the default), `json`, `csv`, or `html` works on every command that prints rows. `CLOUDRIPPER_OUTPUT` sets the same value when the flag is omitted. CSV cells that start with `=`, `+`, `-`, or `@` are prefixed so spreadsheets do not treat them as formulas. `html` writes one document with inline CSS and no scripts, images, or network requests. Every value is escaped. An unpriced resource is `n/a`. Actual spend that the billing APIs did not return is `unavailable`, not `$0`.
 
 `--dry-run` previews mutations. `optimize`, `schedule`, and `scale` also require `--apply` before they will change anything, and `--dry-run` still wins if both are set. Live changes ask for one confirmation on a terminal, or accept `--yes` when stdin is not a terminal.
 
@@ -228,7 +228,7 @@ The `infrastructure/` Terraform stack and `pulumi/` program in this repo are sam
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | — |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token (not Global API Key). Keep out of logs and commits. | — |
 | `CLOUDRIPPER_AUDIT_LOG` | JSONL audit log | `cloudripper-audit.log` |
-| `CLOUDRIPPER_OUTPUT` | `table`, `json`, or `csv` | `table` |
+| `CLOUDRIPPER_OUTPUT` | `table`, `json`, `csv`, or `html` | `table` |
 | `SLACK_WEBHOOK_URL` | Slack incoming webhook | — |
 | `SMTP_HOST` / `SMTP_PORT` | Alert email server | port `587` |
 | `SMTP_USER` / `SMTP_PASSWORD` | SMTP auth, skipped when user is empty | — |

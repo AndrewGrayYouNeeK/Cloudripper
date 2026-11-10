@@ -50,7 +50,7 @@ func Execute() {
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "preview actions without making changes")
 	rootCmd.PersistentFlags().BoolVar(&yes, "yes", false, "skip interactive confirmation for apply, scale, schedule, and chaos")
-	rootCmd.PersistentFlags().StringVar(&outputFmt, "output", "", "output format: table, json, or csv (default table)")
+	rootCmd.PersistentFlags().StringVar(&outputFmt, "output", "", "output format: table, json, csv, or html (default table)")
 	rootCmd.PersistentFlags().StringVar(&awsRegion, "aws-region", "", "AWS region (default: AWS_REGION env or us-east-1)")
 	rootCmd.PersistentFlags().BoolVar(&allRegions, "all-regions", false, "scan every enabled AWS region; opt-in regions that are not enabled are skipped")
 	rootCmd.PersistentFlags().StringVar(&gcpProject, "gcp-project", "", "GCP project (default: GCP_PROJECT env)")

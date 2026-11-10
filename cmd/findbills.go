@@ -165,6 +165,17 @@ func runFindBills(cmd *cobra.Command, _ []string) error {
 			row.Provider, row.Account, row.Amount, row.Date, row.Configured, row.Status, row.Source,
 		})
 	}
+	if format == output.FormatHTML {
+		return output.WriteHTML(cmd.OutOrStdout(), output.HTMLReport{
+			Title: "CloudRipper find-bills",
+			Notes: []string{fmt.Sprintf("Found %d cloud bill(s).", len(findings))},
+			Sections: []output.HTMLSection{{
+				Heading: "Bills",
+				Headers: billHeaders(),
+				Rows:    table,
+			}},
+		})
+	}
 	return render(cmd, billHeaders(), table, rows)
 }
 
