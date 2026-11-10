@@ -154,6 +154,58 @@ func TestCostExplorerDisabledHint(t *testing.T) {
 	}
 }
 
+func TestSummaryPluralizesServices(t *testing.T) {
+	one := Summary(Resolution{
+		ActualAvailable: true,
+		ActualTotal:     6.12,
+		Snapshots: []Snapshot{{
+			Source:   cloud.CostSourceAWS,
+			TotalUSD: 6.12,
+			Services: []ServiceCost{{Service: "AmazonEC2", USD: 6.12}},
+		}},
+	})
+	if !strings.Contains(one, "across 1 service\n") || strings.Contains(one, "services") {
+		t.Fatalf("singular summary = %q", one)
+	}
+
+	two := Summary(Resolution{
+		ActualAvailable: true,
+		ActualTotal:     3,
+		Snapshots: []Snapshot{{
+			Source:   cloud.CostSourceAWS,
+			TotalUSD: 3,
+			Services: []ServiceCost{{Service: "A", USD: 1}, {Service: "B", USD: 2}},
+		}},
+	})
+	if !strings.Contains(two, "across 2 services") {
+		t.Fatalf("plural summary = %q", two)
+	}
+
+	none := Summary(Resolution{
+		ActualAvailable: true,
+		Snapshots: []Snapshot{{
+			Source:   cloud.CostSourceAWS,
+			TotalUSD: 0,
+		}},
+	})
+	if !strings.Contains(none, "across 0 services") {
+		t.Fatalf("zero summary = %q", none)
+	}
+}
+
+func TestRoundCents(t *testing.T) {
+	sum := 6.12 + (-1e-10)
+	if RoundCents(sum) != 6.12 {
+		t.Fatalf("rounded sum = %v", RoundCents(sum))
+	}
+	if RoundCents(-1e-10) != 0 {
+		t.Fatalf("tiny residual = %v", RoundCents(-1e-10))
+	}
+	if RoundCents(10) != 10 || RoundCents(0) != 0 {
+		t.Fatal("exact dollar amounts should stay put")
+	}
+}
+
 func TestSummaryOmitsWarnings(t *testing.T) {
 	text := Summary(Resolution{
 		EstimatedTotal: 3,

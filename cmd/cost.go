@@ -29,7 +29,7 @@ func init() {
 }
 
 func runCost(cmd *cobra.Command, _ []string) error {
-	_, res, err := loadResolution(cmd)
+	cfg, res, err := loadResolution(cmd)
 	if err != nil {
 		return err
 	}
@@ -43,5 +43,5 @@ func runCost(cmd *cobra.Command, _ []string) error {
 	}
 	rows := rowsFromResources(res.Resources)
 	headers, table := resourceTable(rows)
-	return render(cmd, headers, table, res)
+	return render(cmd, headers, table, scanPayload(cfg, res))
 }

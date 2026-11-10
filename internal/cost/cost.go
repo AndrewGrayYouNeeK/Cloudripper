@@ -3,6 +3,7 @@ package cost
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -170,7 +171,12 @@ func Summary(res Resolution) string {
 	} else {
 		fmt.Fprintf(&b, "Actual spend (trailing window): $%.2f\n", noNegZero(res.ActualTotal))
 		for _, snap := range res.Snapshots {
-			fmt.Fprintf(&b, "  %s: $%.2f across %d services", snap.Source, noNegZero(snap.TotalUSD), len(snap.Services))
+			serviceCount := len(snap.Services)
+			serviceWord := "services"
+			if serviceCount == 1 {
+				serviceWord = "service"
+			}
+			fmt.Fprintf(&b, "  %s: $%.2f across %d %s", snap.Source, noNegZero(snap.TotalUSD), serviceCount, serviceWord)
 			if len(snap.Resources) > 0 {
 				fmt.Fprintf(&b, ", %d resources", len(snap.Resources))
 			}
@@ -225,4 +231,17 @@ func noNegZero(v float64) float64 {
 		return 0
 	}
 	return v
+}
+
+// RoundCents rounds a dollar amount to the nearest cent so JSON totals do not
+// print binary float residue (for example 6.12 + -1e-10 encoding as 6.1199999999).
+func RoundCents(v float64) float64 {
+	if math.IsNaN(v) || math.IsInf(v, 0) {
+		return 0
+	}
+	rounded := math.Round(v*100) / 100
+	if rounded == 0 {
+		return 0
+	}
+	return rounded
 }
