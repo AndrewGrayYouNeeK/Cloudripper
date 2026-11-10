@@ -5,6 +5,7 @@ Source for https://cloudripper.youneek.dev, a Cloudflare Worker (`cloudripper-si
 ```bash
 cd site
 npm install
+npm test                 # worker and page checks; does not deploy
 npx wrangler deploy      # needs CLOUDFLARE_API_TOKEN in the environment
 ```
 

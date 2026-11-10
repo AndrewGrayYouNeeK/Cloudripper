@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>YouNeeK CloudRipper — Find cloud waste, real spend & forgotten bills | AWS, GCP, Azure</title>
-<meta name="description" content="CloudRipper is a free, open-source (MIT) Go CLI that scans AWS, GCP and Azure for cloud waste and real spend, finds forgotten paid services, and runs safe chaos tests. Scans need read-only access.">
+<title>YouNeeK CloudRipper — Find cloud waste, real spend & forgotten bills | AWS, GCP, Azure, Cloudflare</title>
+<meta name="description" content="CloudRipper is a free, open-source (MIT) Go CLI for AWS, GCP, Azure, and Cloudflare. It runs on your machine, scans with read-only access, and uses estimates when a billing API is unavailable. Cloudflare inventory is read-only and per-resource cost is unpriced.">
 <link rel="canonical" href="https://cloudripper.youneek.dev/">
 <meta name="theme-color" content="#0b1020">
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -14,7 +14,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="YouNeeK CloudRipper">
 <meta property="og:title" content="YouNeeK CloudRipper — One CLI for cloud waste, real spend, and safe chaos tests">
-<meta property="og:description" content="Free, open-source CLI for AWS, GCP and Azure. Find waste, see real spend, catch forgotten paid services, and run safe chaos tests.">
+<meta property="og:description" content="Free, open-source CLI for AWS, GCP, Azure, and Cloudflare. Runs on your machine. Your cloud data is never sent to us.">
 <meta property="og:url" content="https://cloudripper.youneek.dev/">
 <meta property="og:image" content="https://cloudripper.youneek.dev/og-logo.jpg">
 <meta property="og:image:width" content="1200">
@@ -22,10 +22,10 @@
 <meta property="og:image:alt" content="YouNeeK CloudRipper logo: the N is a purple lightning bolt ripping through storm clouds">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="YouNeeK CloudRipper — cloud waste, real spend, safe chaos tests">
-<meta name="twitter:description" content="Free, open-source (MIT) CLI for AWS, GCP and Azure.">
+<meta name="twitter:description" content="Free, open-source (MIT) CLI for AWS, GCP, Azure, and Cloudflare. Runs on your machine.">
 <meta name="twitter:image" content="https://cloudripper.youneek.dev/og-logo.jpg">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"YouNeeK CloudRipper","applicationCategory":"DeveloperApplication","operatingSystem":"Linux, macOS, Windows","license":"https://opensource.org/license/mit","url":"https://cloudripper.youneek.dev/","codeRepository":"https://github.com/AndrewGrayYouNeeK/Cloudripper","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Open-source Go CLI that scans AWS, GCP and Azure for cloud waste and real spend, finds forgotten paid services, and runs safe chaos tests."}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"YouNeeK CloudRipper","applicationCategory":"DeveloperApplication","operatingSystem":"Linux, macOS, Windows","license":"https://opensource.org/license/mit","url":"https://cloudripper.youneek.dev/","codeRepository":"https://github.com/AndrewGrayYouNeeK/Cloudripper","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Open-source Go CLI for AWS, GCP, Azure, and Cloudflare. It runs on your machine, scans with read-only access, reads actual spend when billing APIs respond, and uses estimates when they do not."}
 </script>
 <style>
 :root{--bg:#0b1020;--bg2:#101833;--card:#131c38;--line:#25315a;--text:#e6edf7;--mute:#9fb0c9;--acc:#38bdf8;--acc2:#818cf8;--ok:#34d399}
@@ -85,7 +85,12 @@ pre{background:#060a18;border:1px solid var(--line);border-radius:12px;padding:1
 .price .btn{text-align:center;width:100%}
 form.wl{max-width:560px;margin:0 auto}
 .row{display:flex;gap:10px;flex-wrap:wrap}
-input[type=email]{flex:1 1 240px;background:#060a18;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font:inherit}
+input[type=email],input[type=text]{flex:1 1 240px;background:#060a18;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font:inherit}
+input[type=text]{width:100%;margin-top:10px}
+fieldset{border:1px solid var(--line);border-radius:12px;margin:14px 0 0;padding:12px 14px;text-align:left}
+fieldset legend{padding:0 6px;color:var(--mute);font-size:.9rem}
+.choices{display:flex;flex-wrap:wrap;gap:8px 14px}
+.choices label{display:flex;gap:6px;align-items:center;font-size:.95rem}
 label.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .hp{position:absolute;left:-9999px;height:0;overflow:hidden}
 #wl-msg{min-height:1.6em;margin-top:12px;text-align:center}
@@ -112,8 +117,8 @@ footer a{margin-right:16px}
 <div class="hero">
   <img class="herologo" src="/logo.webp" width="944" height="600" alt="YouNeeK CloudRipper logo: the N is a purple lightning bolt ripping through storm clouds" fetchpriority="high">
   <span class="badge">Free &amp; open source · MIT licensed</span>
-  <h1>One CLI for <em>cloud waste, real spend, and safe chaos tests</em>, across AWS, GCP, and Azure.</h1>
-  <p class="lead">Find what you're paying for and not using, catch the subscriptions you forgot about, and test how your systems fail. Scans only need read-only access to your accounts.</p>
+  <h1>One CLI for <em>cloud waste, real spend, and safe chaos tests</em>. AWS, GCP, Azure and Cloudflare. Runs on your machine.</h1>
+  <p class="lead">Find what you're paying for and not using, catch the subscriptions you forgot about, and test how your systems fail. The CLI calls each cloud's own APIs. Your cloud data is never sent to us. Scans need only read-only access.</p>
   <div class="install" role="group" aria-label="Install command">
     <code id="cmd"><b>$</b> go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest</code>
     <button type="button" id="copy" aria-label="Copy install command">Copy</button>
@@ -134,13 +139,13 @@ footer a{margin-right:16px}
 
 <section id="features"><div class="wrap">
   <h2>Everything cloud-cost, in one binary</h2>
-  <p class="sub">No agents, no SaaS signup, no data leaving your machine.</p>
+  <p class="sub">No agents, and no SaaS signup required to run the CLI. Scans need only read-only access.</p>
   <div class="grid">
-    <div class="card"><div class="ico" aria-hidden="true">🧹</div><h3>Cloud waste scanner</h3><p>Spots idle, orphaned and oversized resources across AWS, GCP and Azure, so you can shut off what you don't need.</p></div>
-    <div class="card"><div class="ico" aria-hidden="true">💵</div><h3>Real spend</h3><p>Pulls actual billing numbers from your cloud's cost APIs, not estimates, and shows where the money goes.</p></div>
-    <div class="card"><div class="ico" aria-hidden="true">🔎</div><h3>Find forgotten bills</h3><p>The <code>find-bills</code> command hunts down paid services you signed up for and forgot, from your receipts and a bank CSV export.</p></div>
-    <div class="card"><div class="ico" aria-hidden="true">💥</div><h3>Safe chaos tests</h3><p>Run controlled failure experiments to see how your setup behaves, with guardrails and a dry-run first.</p></div>
-    <div class="card"><div class="ico" aria-hidden="true">☁️</div><h3>Multi-cloud</h3><p>One tool and one report for AWS, GCP and Azure instead of three consoles and three sets of scripts.</p></div>
+    <div class="card"><div class="ico" aria-hidden="true">🧹</div><h3>Cloud waste scanner</h3><p>Spots idle, orphaned and oversized resources across AWS, GCP and Azure. Cloudflare inventory is read-only (Workers, R2, KV, D1, and Pages) and does not invent stop or start actions. Per-resource Cloudflare cost is unpriced.</p></div>
+    <div class="card"><div class="ico" aria-hidden="true">💵</div><h3>Spend</h3><p>Reads trailing spend from Cost Explorer, a BigQuery billing export, Azure Cost Management, or Cloudflare billing history when those APIs respond. Estimates are used for priced inventory when a billing API is missing or denies the call, and the two numbers are reported separately. Cloudflare billing history needs Billing Read and is not a per-resource price.</p></div>
+    <div class="card"><div class="ico" aria-hidden="true">🔎</div><h3>Find forgotten bills</h3><p>The <code>find-bills</code> command hunts down paid services you signed up for and forgot, from your receipts and a bank CSV export. Mail access is read-only and only happens when you configure IMAP or Gmail.</p></div>
+    <div class="card"><div class="ico" aria-hidden="true">💥</div><h3>Safe chaos tests</h3><p>Run controlled failure experiments inside a blast-radius limit. With no <code>CHAOS_ENDPOINT</code> the command prints a plan and does not post it. Names that look like production need <code>--allow-prod</code>.</p></div>
+    <div class="card"><div class="ico" aria-hidden="true">☁️</div><h3>Multi-cloud</h3><p>One CLI for AWS, GCP, Azure, and Cloudflare. It runs on your machine and calls each cloud's own APIs. Your cloud data is never sent to us.</p></div>
     <div class="card"><div class="ico" aria-hidden="true">🔓</div><h3>Open source</h3><p>MIT licensed Go. Read the code, run it locally, fork it. Single static binary.</p></div>
   </div>
 </div></section>
@@ -150,15 +155,15 @@ footer a{margin-right:16px}
   <p class="sub">Three steps. Scanning only needs read-only access.</p>
   <ol class="steps">
     <li><h3>Install</h3><p>Download a prebuilt binary for Linux, macOS, or Windows from <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest">GitHub Releases</a>, or run one <code>go install</code> command.</p></li>
-    <li><h3>Connect read-only</h3><p>Use a read-only role or key you already have. Scans never need permission to change or delete anything.</p></li>
-    <li><h3>Scan &amp; act</h3><p>Get a list of waste, real spend, and forgotten bills. You decide what to turn off. Changes only happen if you pass <code>--apply</code> and confirm.</p></li>
+    <li><h3>Connect read-only</h3><p>Scans need only read-only access. <code>optimize</code>, <code>schedule</code>, and <code>scale</code> change AWS, GCP, or Azure resources only when you pass <code>--apply</code>. <code>--dry-run</code> still wins if both are set. A live change asks for confirmation on a terminal, or <code>--yes</code> when stdin is not a terminal. Cloudflare mutations are refused.</p></li>
+    <li><h3>Scan &amp; act</h3><p>You get inventory, spend (an actual total when a billing API responds, otherwise an estimate), and forgotten-bill matches. Chaos posts only when <code>CHAOS_ENDPOINT</code> is set. Slack or email alerts are sent only if you configure them.</p></li>
   </ol>
   <pre aria-label="Example usage"><code>$ go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest
 $ cloudripper rip             # inventory what is running in your cloud accounts
 $ cloudripper cost            # actual vs. estimated spend
 $ cloudripper find-bills      # surface forgotten paid services
 $ cloudripper --help          # see cost and chaos-test commands</code></pre>
-  <div class="safe"><strong>Read-only scans.</strong> Cleanup actions are off unless you pass <code>--apply</code>. Use <code>ReadOnlyAccess</code> and billing read-only policies on AWS (or the equivalent viewer roles on GCP and Azure). Your credentials stay on your machine.</div>
+  <div class="safe"><strong>Read-only scans.</strong> <code>rip</code> and <code>cost</code> do not change resources. <code>optimize</code>, <code>schedule</code>, and <code>scale</code> require <code>--apply</code> before they change anything, and <code>--dry-run</code> still wins if both are set. Cloudflare is read-only. Chaos does not use <code>--apply</code>; it posts only when <code>CHAOS_ENDPOINT</code> is set. The CLI calls each cloud's own APIs with credentials that stay on your machine. Your cloud data is never sent to us.</div>
 </div></section>
 
 <section id="pricing"><div class="wrap">
@@ -168,7 +173,7 @@ $ cloudripper --help          # see cost and chaos-test commands</code></pre>
     <div class="card price">
       <h3>Free</h3><div class="amt">$0<small> forever</small></div>
       <p>The full open-source CLI.</p>
-      <ul><li>AWS, GCP and Azure scanning</li><li>Real spend reports</li><li>find-bills</li><li>Safe chaos tests</li><li>MIT license</li></ul>
+      <ul><li>AWS, GCP, Azure, and Cloudflare scanning</li><li>Spend reports (actuals when billing APIs respond, estimates otherwise)</li><li>find-bills</li><li>Safe chaos tests</li><li>MIT license</li></ul>
       <a class="btn" href="https://github.com/AndrewGrayYouNeeK/Cloudripper">Get the CLI</a>
     </div>
     <div class="card price hl">
@@ -189,14 +194,26 @@ $ cloudripper --help          # see cost and chaos-test commands</code></pre>
 
 <section id="waitlist"><div class="wrap">
   <h2>Join the Pro waitlist</h2>
-  <p class="sub">Be first to know when the hosted dashboard launches. No spam, one email.</p>
+  <p class="sub">Optional. Your email is stored on this site with the time you joined. This page does not send email.</p>
   <form class="wl" id="wl" novalidate>
     <label class="vh" for="email">Email address</label>
     <div class="row">
-      <input type="email" id="email" name="email" placeholder="you@company.com" autocomplete="email" required>
+      <input type="email" id="email" name="email" placeholder="you@company.com" autocomplete="email" required maxlength="254">
       <div class="hp" aria-hidden="true"><label>Company <input type="text" name="company" tabindex="-1" autocomplete="off"></label></div>
       <button class="primary" type="submit" id="wl-btn">Join waitlist</button>
     </div>
+    <fieldset>
+      <legend>What do you want most? Optional.</legend>
+      <div class="choices">
+        <label><input type="checkbox" name="wants" value="scheduled scans"> Scheduled scans</label>
+        <label><input type="checkbox" name="wants" value="multi-account"> Multi-account</label>
+        <label><input type="checkbox" name="wants" value="history"> History</label>
+        <label><input type="checkbox" name="wants" value="team invites"> Team invites</label>
+        <label><input type="checkbox" name="wants" value="other"> Other</label>
+      </div>
+      <label class="vh" for="wants-note">Optional detail</label>
+      <input type="text" id="wants-note" name="wants_note" maxlength="200" placeholder="Optional detail, up to 200 characters">
+    </fieldset>
     <p id="wl-msg" role="status" aria-live="polite"></p>
   </form>
 </div></section>
@@ -205,11 +222,11 @@ $ cloudripper --help          # see cost and chaos-test commands</code></pre>
   <h2>FAQ</h2>
   <p class="sub"></p>
   <details><summary>Is CloudRipper really free?</summary><p>Yes. The CLI is open source under the MIT license and free to use, including commercially. Paid plans are only for the optional hosted dashboard.</p></details>
-  <details><summary>Is it safe to point at my cloud account?</summary><p>Scans only need read-only access, so with read-only credentials it can't modify or delete anything. Commands that change things need <code>--apply</code> and a confirmation, and chaos tests are opt-in with blast-radius limits.</p></details>
-  <details><summary>Where do my credentials go?</summary><p>Nowhere. The CLI runs on your machine and uses your local credentials to talk to your cloud providers directly.</p></details>
-  <details><summary>Which clouds are supported?</summary><p>AWS, Google Cloud (GCP) and Microsoft Azure.</p></details>
-  <details><summary>What does find-bills do?</summary><p>It looks through your receipts and an optional bank CSV export for recurring paid services you may have forgotten about, read-only.</p></details>
-  <details><summary>When will Pro launch?</summary><p>Soon. Join the waitlist above and we'll email you once, when it's ready.</p></details>
+  <details><summary>Is it safe to point at my cloud account?</summary><p>Scans need only read-only access. <code>optimize</code>, <code>schedule</code>, and <code>scale</code> change AWS, GCP, or Azure only when you pass <code>--apply</code>, and <code>--dry-run</code> still wins if both are set. A live change asks for confirmation on a terminal, or <code>--yes</code> when stdin is not a terminal. Cloudflare mutations are refused. Chaos posts only when <code>CHAOS_ENDPOINT</code> is set, and production-looking names need <code>--allow-prod</code>.</p></details>
+  <details><summary>Where do my credentials go?</summary><p>The CLI runs on your machine and uses your local credentials to call AWS, GCP, Azure, or Cloudflare directly. Your cloud data is never sent to us. The waitlist form on this site stores the email you submit. Slack and email alerts run only if you configure them. <code>find-bills</code> talks to IMAP or Gmail only when you point it there.</p></details>
+  <details><summary>Which clouds are supported?</summary><p>AWS, Google Cloud (GCP), Microsoft Azure, and Cloudflare. Cloudflare inventory is read-only. Billing history needs Billing Read. Per-resource Cloudflare costs are unpriced.</p></details>
+  <details><summary>What does find-bills do?</summary><p>It looks through mail you configure (IMAP or Gmail, read-only) and an optional bank or card CSV for recurring paid services you may have forgotten about.</p></details>
+  <details><summary>When will Pro launch?</summary><p>There is no date yet. Joining the waitlist stores your email on this site. This site has no mailer and does not send you a message.</p></details>
   <details><summary>How do I get Team / Business?</summary><p>Email <a href="mailto:andrewgray@usedartifacts.com?subject=CloudRipper%20Team%2FBusiness">andrewgray@usedartifacts.com</a> and we'll set you up.</p></details>
 </div></section>
 </main>
@@ -231,9 +248,13 @@ $ cloudripper --help          # see cost and chaos-test commands</code></pre>
   f.addEventListener('submit',function(e){
     e.preventDefault();
     var email=f.email.value.trim();
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){m.className='err';m.textContent='Please enter a valid email address.';f.email.focus();return}
+    if(email.length>254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){m.className='err';m.textContent='Please enter a valid email address.';f.email.focus();return}
+    var note=f.wants_note.value.trim();
+    if([...note].length>200){m.className='err';m.textContent='Keep the detail to 200 characters.';f.wants_note.focus();return}
+    var wants=[];
+    f.querySelectorAll('input[name=wants]:checked').forEach(function(el){wants.push(el.value)});
     b.disabled=true;m.className='';m.textContent='Joining…';
-    fetch('/api/waitlist',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:email,company:f.company.value})})
+    fetch('/api/waitlist',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:email,company:f.company.value,wants:wants,wants_note:note})})
     .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
     .then(function(x){
       if(x.ok){m.className='good';m.textContent=x.j.message||"You're on the list!";f.reset()}
