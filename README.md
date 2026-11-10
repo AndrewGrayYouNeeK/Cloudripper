@@ -383,6 +383,68 @@ Microsoft's [Cost Management scopes](https://learn.microsoft.com/en-us/azure/cos
 
 The token scope table in [Configuration](#cloudflare-token-scopes-read-only) is the permission list. Inventory is read-only. Billing history is a separate Billing Read call and is not required to list Workers, R2, KV, D1, or Pages. Per-resource Cloudflare costs stay unpriced.
 
+## What will this cost me in API calls?
+
+Counts below are what this code issues. List calls that loop on a page token make one request per page, so a small account is one request per list and a large account is more. Credential or token fetches made by the SDKs are not included. `demo` and `find-bills --sample` make none.
+
+### Commands that scan and read spend
+
+`rip`, `cost`, `optimize`, and `schedule` each call `loadResolution` once (`cmd/ui.go`): one inventory scan, then one pass over the configured billing sources. `watch` does that same collection on every sample (`cmd/watch.go`, `internal/watch/watch.go`). The first sample runs immediately. Later samples run on `WATCH_INTERVAL` (default 15 minutes) until the process stops. `watch --once` is a single collection.
+
+AWS is always attempted. For one region, with every list fitting in a single page:
+
+| Call | Requests |
+| --- | --- |
+| `DescribeInstances`, `DescribeVolumes`, `DescribeDBInstances`, `DescribeLoadBalancers`, `DescribeTargetGroups`, `ListFunctions`, `ListClusters`, `DescribeAutoScalingGroups` | 1 per call, plus another request for each extra page |
+| `DescribeTargetHealth` | 1 per target group |
+| `DescribeCluster` | 1 per cluster name returned by `ListClusters` |
+| `DescribeAddresses` | 1 (not paged) |
+| `ListBuckets` | 1, plus another request for each extra page |
+| `GetBucketLocation` | 1 per bucket `ListBuckets` returned, including buckets outside the scanned region |
+| `GetBucketTagging` | 1 per bucket kept after the region check |
+
+`--all-regions` adds one `DescribeRegions`, repeats the non-S3 scan once per enabled region, and lists S3 once. Opt-in regions that are not enabled are skipped.
+
+Cost Explorer (`internal/cost/aws.go`), on each `rip`, `cost`, `optimize`, `schedule`, or `watch` sample, when the client is constructed:
+
+- `GetCostAndUsage`: 1 request. The client does not follow `NextPageToken`.
+- `GetCostAndUsageWithResources`: 1 request when a region is set. 0 requests with `--all-regions`, because the region filter is cleared and the resource-level call is skipped.
+
+If `NewAWSExplorer` fails, that sample sends no Cost Explorer request and records a warning.
+
+GCP runs only when `GCP_PROJECT` is set. Each aggregatedList or list is one HTTP request per page. GKE `clusters.list` is one request. BigQuery is one `jobs.query` when `GCP_BILLING_TABLE` is set, and no BigQuery request when it is empty (the source fails locally with "GCP_BILLING_TABLE is not set").
+
+Azure runs only when `AZURE_SUBSCRIPTION_ID` is set. Each list pager is at least one request, plus one `InstanceView` per virtual machine that passes the resource-group filter. Cost Management `QueryClient.Usage` is one request.
+
+Cloudflare runs only when both `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` are set. Inventory (`internal/cloud/cloudflare.go`, `internal/cloud/cloudflare_api.go`):
+
+| Endpoint | Requests |
+| --- | --- |
+| `GET /accounts/{id}/workers/scripts` | 1 (not paged) |
+| `GET /accounts/{id}/r2/buckets` | at least 1 for each of `default`, `eu`, and `us`; more when a cursor is returned (`per_page` 100) |
+| `GET /accounts/{id}/storage/kv/namespaces` | at least 1 (`per_page` 100) |
+| `GET /accounts/{id}/d1/database` | at least 1 (`per_page` 100) |
+| `GET /accounts/{id}/pages/projects` | at least 1 (`per_page` 20) |
+
+Billing history is a separate paged `GET /accounts/{id}/billing/history` (`per_page` 50), one or more requests, and only on the cost pass.
+
+### Other commands
+
+| Command | Cloud billing and inventory APIs |
+| --- | --- |
+| `scale` | No Cost Explorer, BigQuery, Azure Cost Management, or Cloudflare billing. AWS: paged `DescribeAutoScalingGroups`, `DescribeInstances` for an `ec2` policy, and one `GetMetricStatistics` per group. GCP: paged instance-group list and one Monitoring `timeSeries.list` per group. |
+| `find-bills` | No cloud inventory or cost APIs. IMAP or Gmail only when those sources are configured. `--csv` is a local file. `--sample` is the embedded file and does not use the network. |
+| `chaos` | No cloud billing APIs. With `CHAOS_ENDPOINT` unset it prints a plan and does not POST. With an endpoint it POSTs to that URL. |
+| `demo` | No network. |
+
+Slack and email run only when `watch` raises an alert and `SLACK_WEBHOOK_URL` or the SMTP variables are set. They are not called on every sample.
+
+### Cost Explorer price
+
+AWS's [Cost Explorer pricing page](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/pricing/) says each API request against the primary billing view costs $0.01, and the [Cost Explorer FAQ](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/faqs/) says a paginated result bills each page as a separate request. Checked against those pages while writing this section. This CLI sends one `GetCostAndUsage` and, unless `--all-regions` skips it, one `GetCostAndUsageWithResources`, and it does not page those responses. That is two Cost Explorer requests per `rip`, `cost`, `optimize`, or `schedule` run in the default single-region case, and one request with `--all-regions`. `watch` repeats that count on every sample. The same pricing page says a request that uses a custom billing view costs $0.01 per source view. This CLI does not set a billing view.
+
+Prices for the other AWS calls, and for GCP, Azure, and Cloudflare, are not stated here. Check each provider's current pricing page.
+
 ## Install
 
 Prebuilt binaries: download the archive for your system from the [latest release](https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest) (Linux, macOS, and Windows; amd64 and arm64). Check it against `checksums.txt`, unpack it, and put `cloudripper` on your `PATH`. For example, on Linux amd64:
