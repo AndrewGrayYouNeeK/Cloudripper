@@ -1,1 +1,13 @@
-{"name":"cloudripper-site","private":true,"version":"1.0.0","scripts":{"deploy":"wrangler deploy"},"devDependencies":{"wrangler":"^4"}}
+{
+  "name": "cloudripper-site",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --test src/*.test.js",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}

@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"strings"
@@ -374,6 +375,109 @@ func TestCloudflareUnpricedJSONNullCost(t *testing.T) {
 	}
 	if !strings.Contains(out, `"cost_usd": 10`) {
 		t.Fatalf("aws priced row should keep numeric cost: %s", out)
+	}
+}
+
+func TestCostJSONMatchesRipSchemaAndRoundsTotals(t *testing.T) {
+	resources := []cloud.Resource{
+		{ID: "api", Provider: "cloudflare", Type: cloud.ResourceCFWorker, Status: "active", CostUSD: 0, CostSource: cloud.CostSourceUnpriced},
+		{ID: "i-1", Provider: "aws", Type: cloud.ResourceEC2, Status: "running", CostUSD: 10, CostSource: cloud.CostSourceEstimate},
+		{ID: "fn", Provider: "aws", Type: cloud.ResourceLambda, Status: "active", CostUSD: 0, CostSource: cloud.CostSourceEstimate},
+	}
+	// 6.12 (Cloudflare billing) plus a tiny Cost Explorer residual encodes as 6.1199999999.
+	ugly := 6.12 + (-1e-10)
+	resolution := cost.Resolution{
+		Resources:       resources,
+		EstimatedTotal:  10,
+		UnpricedCount:   1,
+		ActualTotal:     ugly,
+		ActualAvailable: true,
+		Snapshots: []cost.Snapshot{
+			{
+				Source:   cloud.CostSourceCloudflareBilling,
+				TotalUSD: 6.12,
+				Services: []cost.ServiceCost{{Service: "Workers Paid", USD: 6.12}},
+			},
+			{
+				Source:   cloud.CostSourceAWS,
+				TotalUSD: -1e-10,
+				Services: []cost.ServiceCost{{Service: "AmazonEC2", USD: -1e-10}},
+			},
+		},
+	}
+	prev := rt
+	t.Cleanup(func() { rt = prev })
+	rt = runtime{
+		scan: func(context.Context, config.Config) ([]cloud.Resource, error) {
+			return resources, nil
+		},
+		costs: func(context.Context, config.Config, []cloud.Resource) (cost.Resolution, error) {
+			return resolution, nil
+		},
+		executors: func(context.Context, config.Config) ([]cloud.Executor, error) { return nil, nil },
+		scalers:   func(context.Context, config.Config) ([]scale.Controller, error) { return nil, nil },
+	}
+
+	for _, command := range []string{"cost", "rip"} {
+		out, _, err := runCLI(t, "--output", "json", command)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(out, `"CostUSD"`) || strings.Contains(out, `"ID"`) || strings.Contains(out, "6.1199999999") {
+			t.Fatalf("%s json kept Go field names or float residue:\n%s", command, out)
+		}
+		var doc struct {
+			DryRun         bool    `json:"dry_run"`
+			EstimatedTotal float64 `json:"estimated_total"`
+			ActualTotal    float64 `json:"actual_total"`
+			Resources      []struct {
+				ID         string   `json:"id"`
+				Provider   string   `json:"provider"`
+				CostUSD    *float64 `json:"cost_usd"`
+				CostSource string   `json:"cost_source"`
+			} `json:"resources"`
+			Snapshots []struct {
+				Source   string  `json:"source"`
+				TotalUSD float64 `json:"total_usd"`
+				Services []struct {
+					USD float64 `json:"usd"`
+				} `json:"services"`
+			} `json:"snapshots"`
+		}
+		if err := json.Unmarshal([]byte(out), &doc); err != nil {
+			t.Fatalf("%s json: %v\n%s", command, err, out)
+		}
+		if doc.EstimatedTotal != 10 || doc.ActualTotal != 6.12 {
+			t.Fatalf("%s totals estimated=%v actual=%v", command, doc.EstimatedTotal, doc.ActualTotal)
+		}
+		byID := map[string]struct {
+			CostUSD    *float64
+			CostSource string
+		}{}
+		for _, row := range doc.Resources {
+			byID[row.ID] = struct {
+				CostUSD    *float64
+				CostSource string
+			}{row.CostUSD, row.CostSource}
+		}
+		api := byID["api"]
+		if api.CostUSD != nil || api.CostSource != cloud.CostSourceUnpriced {
+			t.Fatalf("%s unpriced row = %+v", command, api)
+		}
+		aws := byID["i-1"]
+		if aws.CostUSD == nil || *aws.CostUSD != 10 || aws.CostSource != cloud.CostSourceEstimate {
+			t.Fatalf("%s priced aws row = %+v", command, aws)
+		}
+		lambda := byID["fn"]
+		if lambda.CostUSD == nil || *lambda.CostUSD != 0 {
+			t.Fatalf("%s zero estimate must stay numeric, got %+v", command, lambda)
+		}
+		if len(doc.Snapshots) != 2 || doc.Snapshots[0].TotalUSD != 6.12 || doc.Snapshots[1].TotalUSD != 0 {
+			t.Fatalf("%s snapshots = %+v", command, doc.Snapshots)
+		}
+		if doc.Snapshots[1].Services[0].USD != 0 {
+			t.Fatalf("%s residual service usd = %v", command, doc.Snapshots[1].Services[0].USD)
+		}
 	}
 }
 
