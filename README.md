@@ -374,7 +374,7 @@ Roles checked against Google's IAM pages while writing this section:
 - [BigQuery Job User](https://cloud.google.com/bigquery/docs/access-control) (`roles/bigquery.jobUser`) includes `bigquery.jobs.create`, which is what `jobs.query` needs to start a job.
 - BigQuery Data Viewer (`roles/bigquery.dataViewer`), granted on the billing export dataset, is documented as permission to get and query table data. The export table also has to exist. Both the job role and data access are required; the job role alone cannot read the table.
 
-Cloud Functions list, GKE cluster list, `storage.buckets.list`, and Monitoring `timeSeries.list` are called by the code. This section did not re-check which predefined role contains each of those permission tokens. Confirm the current role on [Google's IAM role reference](https://cloud.google.com/iam/docs/roles-overview) before you grant one. `roles/storage.objectViewer` is the wrong guess for listing buckets: the code calls `Buckets.List`, which needs `storage.buckets.list`, and that was not matched to a minimal predefined role here.
+Cloud Functions list, GKE cluster list, `storage.buckets.list`, and Monitoring `timeSeries.list` are called by the code. This section did not re-check which predefined role contains each of those permission tokens, including `storage.buckets.list` for `Buckets.List`. Confirm the current role on [Google's IAM role reference](https://cloud.google.com/iam/docs/roles-overview) before you grant one.
 
 ### Azure
 
