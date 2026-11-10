@@ -267,6 +267,122 @@ Create a token in the Cloudflare dashboard (API Tokens), not a Global API Key. M
 
 You can grant only the product reads you need. Missing scopes produce a warning for that product and leave other inventory intact. Billing Read is optional: without it, `cost`/`rip` still list resources and report Cloudflare actual spend as unavailable.
 
+## Minimum read-only permissions
+
+These lists are the read calls in this repository. They are not a live IAM simulation. `optimize --apply`, `schedule --apply`, and `scale --apply` need extra write permissions on AWS, GCP, and Azure. Cloudflare `Execute` returns an error and does not call a write API (`internal/cloud/cloudflare.go`).
+
+### AWS
+
+Read calls, by SDK method:
+
+| SDK call | Where | IAM action |
+| --- | --- | --- |
+| `ec2:DescribeInstances` | `internal/cloud/aws_scan.go`, and `internal/scale/aws.go` for an `ec2` policy | `ec2:DescribeInstances` |
+| `ec2:DescribeVolumes` | `internal/cloud/aws_scan.go` | `ec2:DescribeVolumes` |
+| `ec2:DescribeAddresses` | `internal/cloud/aws_scan.go` | `ec2:DescribeAddresses` |
+| `ec2:DescribeRegions` | `internal/cloud/regions.go`, only with `--all-regions` | `ec2:DescribeRegions` |
+| `rds:DescribeDBInstances` | `internal/cloud/aws_scan.go` | `rds:DescribeDBInstances` |
+| `s3:ListBuckets` | `internal/cloud/aws_scan.go` | `s3:ListAllMyBuckets` (the IAM action AWS documents for ListBuckets) |
+| `s3:GetBucketLocation` | `internal/cloud/aws_scan.go`, once per listed bucket | `s3:GetBucketLocation` |
+| `s3:GetBucketTagging` | `internal/cloud/aws_scan.go`, once per bucket kept for the scan | `s3:GetBucketTagging` |
+| `elasticloadbalancing:DescribeLoadBalancers` | `internal/cloud/aws_scan.go` | `elasticloadbalancing:DescribeLoadBalancers` |
+| `elasticloadbalancing:DescribeTargetGroups` | `internal/cloud/aws_scan.go` | `elasticloadbalancing:DescribeTargetGroups` |
+| `elasticloadbalancing:DescribeTargetHealth` | `internal/cloud/aws_scan.go`, once per target group | `elasticloadbalancing:DescribeTargetHealth` |
+| `lambda:ListFunctions` | `internal/cloud/aws_scan.go` | `lambda:ListFunctions` |
+| `eks:ListClusters` | `internal/cloud/aws_scan.go` | `eks:ListClusters` |
+| `eks:DescribeCluster` | `internal/cloud/aws_scan.go`, once per cluster name | `eks:DescribeCluster` |
+| `autoscaling:DescribeAutoScalingGroups` | `internal/cloud/aws_scan.go`, and `internal/scale/aws.go` | `autoscaling:DescribeAutoScalingGroups` |
+| `cloudwatch:GetMetricStatistics` | `internal/scale/aws.go` only (`scale`, not `rip`) | `cloudwatch:GetMetricStatistics` |
+| `ce:GetCostAndUsage` | `internal/cost/aws.go` | `ce:GetCostAndUsage` |
+| `ce:GetCostAndUsageWithResources` | `internal/cost/aws.go`, only when a region filter is set | `ce:GetCostAndUsageWithResources` |
+
+`s3:ListAllMyBuckets` is the action named on the [ListBuckets API page](https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html). The other IAM names match the SDK operation names above. This repo did not call `iam:SimulatePrincipalPolicy`.
+
+Policy for those read actions:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CloudRipperRead",
+      "Effect": "Allow",
+      "Action": [
+        "autoscaling:DescribeAutoScalingGroups",
+        "ce:GetCostAndUsage",
+        "ce:GetCostAndUsageWithResources",
+        "cloudwatch:GetMetricStatistics",
+        "ec2:DescribeAddresses",
+        "ec2:DescribeInstances",
+        "ec2:DescribeRegions",
+        "ec2:DescribeVolumes",
+        "eks:DescribeCluster",
+        "eks:ListClusters",
+        "elasticloadbalancing:DescribeLoadBalancers",
+        "elasticloadbalancing:DescribeTargetGroups",
+        "elasticloadbalancing:DescribeTargetHealth",
+        "lambda:ListFunctions",
+        "rds:DescribeDBInstances",
+        "s3:GetBucketLocation",
+        "s3:GetBucketTagging",
+        "s3:ListAllMyBuckets"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+`cloudwatch:GetMetricStatistics` is only used by `scale`. `ec2:DescribeRegions` is only used with `--all-regions`. Drop either action if you do not use that command.
+
+The published AWS managed policy [ReadOnlyAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/ReadOnlyAccess.html) version v191 (edited 2026-10-30) includes `ce:GetCostAndUsage`, `ce:GetCostAndUsageWithResources`, `ec2:Describe*`, `rds:Describe*`, `s3:Get*` and `s3:List*`, `elasticloadbalancing:Describe*`, `lambda:List*`, `eks:Describe*` and `eks:List*`, `autoscaling:Describe*`, and `cloudwatch:Get*`. That was read from the policy page while writing this section. It is not true of every historical version: the same page shows the policy has been edited many times. A permissions boundary, an SCP, or an older attached version can still omit Cost Explorer. Cost Explorer also has to be enabled in the Billing console before these actions return data. This repository did not attach the managed policy to an account.
+
+Writes used by apply and scale, and not included above, are in `internal/cloud/aws_exec.go` and `internal/scale/aws.go`: EC2 stop/start/terminate, `CreateTags`, `ModifyInstanceAttribute`, `DeleteVolume`, `ReleaseAddress`; RDS stop/start/`ModifyDBInstance`; `DeleteLoadBalancer`; Auto Scaling `SetDesiredCapacity` and EC2 `ModifyInstanceAttribute` for scale. RDS terminate is refused in code.
+
+### GCP
+
+Inventory in `internal/cloud/gcp_sdk.go` calls, when `GCP_PROJECT` is set:
+
+- `compute.instances.aggregatedList`, `disks.aggregatedList`, `addresses.aggregatedList`, `forwardingRules.aggregatedList`, `globalForwardingRules.list`, `instanceGroupManagers.aggregatedList`
+- `storage.buckets.list`
+- `cloudfunctions.projects.locations.functions.list`
+- `container.projects.locations.clusters.list` (one `Do()` call, not paged)
+
+Billing, when `GCP_BILLING_TABLE` is set, calls BigQuery `jobs.query` (`internal/cost/gcp_sdk.go`). `scale` calls Cloud Monitoring `timeSeries.list` (`internal/scale/gcp.go`).
+
+OAuth scopes requested by those clients, from `google.golang.org/api` v0.209.0 (the version in `go.mod`):
+
+| Client | Constant | Scope |
+| --- | --- | --- |
+| Compute, Storage, Cloud Functions, GKE | `CloudPlatformScope` | `https://www.googleapis.com/auth/cloud-platform` |
+| BigQuery | `bigquery.BigqueryScope` | `https://www.googleapis.com/auth/bigquery` |
+| Monitoring (`scale` only) | `monitoring.MonitoringReadScope` | `https://www.googleapis.com/auth/monitoring.read` |
+
+`cloud-platform` and `bigquery` are broader than the methods above. The code does not request a narrower scope.
+
+Roles checked against Google's IAM pages while writing this section:
+
+- [Compute Viewer](https://cloud.google.com/iam/docs/roles-permissions/compute) (`roles/compute.viewer`) is documented as read-only get and list of Compute Engine resources. The code's aggregatedList and list calls are the list surface for instances, disks, addresses, forwarding rules, and instance group managers. This section did not diff every permission token in that role.
+- [BigQuery Job User](https://cloud.google.com/bigquery/docs/access-control) (`roles/bigquery.jobUser`) includes `bigquery.jobs.create`, which is what `jobs.query` needs to start a job.
+- BigQuery Data Viewer (`roles/bigquery.dataViewer`), granted on the billing export dataset, is documented as permission to get and query table data. The export table also has to exist. Both the job role and data access are required; the job role alone cannot read the table.
+
+Cloud Functions list, GKE cluster list, `storage.buckets.list`, and Monitoring `timeSeries.list` are called by the code. This section did not re-check which predefined role contains each of those permission tokens. Confirm the current role on [Google's IAM role reference](https://cloud.google.com/iam/docs/roles-overview) before you grant one. `roles/storage.objectViewer` is the wrong guess for listing buckets: the code calls `Buckets.List`, which needs `storage.buckets.list`, and that was not matched to a minimal predefined role here.
+
+### Azure
+
+When `AZURE_SUBSCRIPTION_ID` is set, `internal/cloud/azure_sdk.go` lists:
+
+- virtual machines (`NewListAllPager`) and, for each VM that passes the optional resource-group filter, `InstanceView`
+- disks, public IP addresses, load balancers, storage accounts, web apps (Function apps are the sites whose kind contains `functionapp`), and AKS managed clusters
+
+`internal/cost/azure.go` calls Cost Management `QueryClient.Usage` once per run, scope `/subscriptions/{id}`.
+
+Microsoft's [Cost Management scopes](https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/understand-work-scopes) page lists the built-in Reader role as read-only for the Query API, and Cost Management Reader as view-only access to cost data. Reader is the role that also covers ordinary resource reads; Cost Management Reader is not an inventory role. This section did not download the Reader role definition, so it does not claim that role JSON contains every action the SDK emits. The SDK calls above are what the code issues.
+
+### Cloudflare
+
+The token scope table in [Configuration](#cloudflare-token-scopes-read-only) is the permission list. Inventory is read-only. Billing history is a separate Billing Read call and is not required to list Workers, R2, KV, D1, or Pages. Per-resource Cloudflare costs stay unpriced.
+
 ## Install
 
 Prebuilt binaries: download the archive for your system from the [latest release](https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest) (Linux, macOS, and Windows; amd64 and arm64). Check it against `checksums.txt`, unpack it, and put `cloudripper` on your `PATH`. For example, on Linux amd64:
