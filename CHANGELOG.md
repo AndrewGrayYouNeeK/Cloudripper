@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.2.0] - 2026-11-10
+
 - `cloudripper demo` prints rip, cost, and optimize-style output from a fictional multi-cloud sample embedded in the binary. It does not use credentials or the network. Amounts are made up and are not real spend or real savings.
 - `find-bills --sample` reads that same embedded card export as `docs/examples/sample-card-export.csv`, with no file and no network.
 - `--output html` writes one self-contained report for commands that print rows, including `rip`, `cost`, `optimize`, and `find-bills`. Values are escaped. Unpriced costs are `n/a`. Missing actuals are `unavailable`, not `$0`.
