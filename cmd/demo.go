@@ -137,7 +137,7 @@ func writeDemoTable(cmd *cobra.Command, res cost.Resolution, result optimizer.Re
 	rows := rowsFromResources(res.Resources)
 	fmt.Fprintf(out, "Found %d fictional resources:\n\n", len(rows))
 	headers, table := resourceTable(rows)
-	if err := output.WriteTable(out, headers, table); err != nil {
+	if err := writeFormattedTable(out, headers, table); err != nil {
 		return err
 	}
 	fmt.Fprintln(out)

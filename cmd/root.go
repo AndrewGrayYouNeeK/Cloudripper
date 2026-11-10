@@ -10,6 +10,7 @@ import (
 var (
 	dryRun              bool
 	yes                 bool
+	noColor             bool
 	outputFmt           string
 	awsRegion           string
 	gcpProject          string
@@ -49,6 +50,7 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "preview actions without making changes")
+	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable table color; color is also off when stdout is not a terminal or NO_COLOR is set")
 	rootCmd.PersistentFlags().BoolVar(&yes, "yes", false, "skip interactive confirmation for apply, scale, schedule, and chaos")
 	rootCmd.PersistentFlags().StringVar(&outputFmt, "output", "", "output format: table, json, csv, or html (default table)")
 	rootCmd.PersistentFlags().StringVar(&awsRegion, "aws-region", "", "AWS region (default: AWS_REGION env or us-east-1)")

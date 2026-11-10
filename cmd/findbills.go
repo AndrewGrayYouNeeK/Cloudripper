@@ -244,7 +244,7 @@ func renderSampleBills(cmd *cobra.Command, format output.Format, findings []bill
 			return nil
 		}
 		fmt.Fprintf(cmd.OutOrStdout(), "Found %d fictional cloud bill(s):\n\n", len(findings))
-		return output.WriteTable(cmd.OutOrStdout(), headers, table)
+		return writeFormattedTable(cmd.OutOrStdout(), headers, table)
 	default:
 		return fmt.Errorf("unhandled output format %q", format)
 	}

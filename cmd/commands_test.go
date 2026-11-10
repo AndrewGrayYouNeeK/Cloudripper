@@ -466,6 +466,9 @@ func TestDemoFictionalSample(t *testing.T) {
 	if stderr != "" {
 		t.Fatalf("table demo should keep the banner on stdout, stderr=%q", stderr)
 	}
+	if strings.Contains(out, "\033") {
+		t.Fatalf("demo table on a pipe should not be colored:\n%s", out)
+	}
 	for _, needle := range []string{"FICTIONAL SAMPLE DATA", "not your cloud spend", "not real savings", "sample-worker", "n/a", "sample-protected"} {
 		if !strings.Contains(out, needle) {
 			t.Fatalf("table demo missing %q:\n%s", needle, out)
@@ -609,8 +612,15 @@ func TestHTMLReportsForSpendCommands(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(help, "table, json, csv, or html") {
+	if !strings.Contains(help, "table, json, csv, or html") || !strings.Contains(help, "--no-color") {
 		t.Fatalf("help = %s", help)
+	}
+	jsonOut, _, err := runCLI(t, "--no-color", "--output", "json", "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(jsonOut, "\033") {
+		t.Fatal("json output contained color")
 	}
 }
 
