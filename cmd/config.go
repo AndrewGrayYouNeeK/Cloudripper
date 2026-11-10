@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
+	appruntime "github.com/AndrewGrayYouNeeK/Cloudripper/internal/runtime"
 )
 
 func loadConfig() config.Config {
@@ -39,22 +40,5 @@ func loadConfig() config.Config {
 }
 
 func buildProviders(cfg config.Config) []cloud.Provider {
-	var providers []cloud.Provider
-
-	// Always include AWS; the SDK credential chain resolves IAM roles, SSO, etc.
-	awsProvider := cloud.NewAWSProvider(cfg.AWSRegion)
-	awsProvider.SetAllRegions(cfg.AllRegions)
-	providers = append(providers, awsProvider)
-
-	if cfg.GCPProject != "" {
-		providers = append(providers, cloud.NewGCPProvider(cfg.GCPProject, cfg.GCPRegion))
-	}
-	if cfg.AzureSubscription != "" {
-		providers = append(providers, cloud.NewAzureProvider(cfg.AzureSubscription, cfg.AzureResourceGroup))
-	}
-	if cloud.CloudflareConfigured(cfg.CloudflareAccountID, cfg.CloudflareAPIToken) {
-		providers = append(providers, cloud.NewCloudflareProvider(cfg.CloudflareAccountID, cfg.CloudflareAPIToken))
-	}
-
-	return providers
+	return appruntime.BuildProviders(cfg)
 }

@@ -8,10 +8,11 @@ import (
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/demo"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/optimizer"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/output"
+	appruntime "github.com/AndrewGrayYouNeeK/Cloudripper/internal/runtime"
 	"github.com/spf13/cobra"
 )
 
-const demoSavingsNote = "Potential savings are the optimizer's heuristic on this fictional inventory. They are not real savings, and the demo does not change any cloud resource."
+const demoSavingsNote = appruntime.DemoSavingsNote
 
 var demoCmd = &cobra.Command{
 	Use:   "demo",

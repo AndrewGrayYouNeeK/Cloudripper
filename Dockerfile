@@ -1,5 +1,5 @@
 # Build a static CloudRipper binary and run it on a distroless image.
-FROM golang:1.22-bookworm AS build
+FROM golang:1.26.10-bookworm AS build
 
 WORKDIR /src
 COPY go.mod go.sum ./

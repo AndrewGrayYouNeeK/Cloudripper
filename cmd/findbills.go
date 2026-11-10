@@ -3,13 +3,12 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/bills"
-	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/demo"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/output"
+	appruntime "github.com/AndrewGrayYouNeeK/Cloudripper/internal/runtime"
 	"github.com/spf13/cobra"
 )
 
@@ -57,88 +56,21 @@ func init() {
 
 func runFindBills(cmd *cobra.Command, _ []string) error {
 	cfg := loadConfig()
-	sinceWindow := 120 * 24 * time.Hour
-	if cmd.Flags().Changed("since") {
-		sinceWindow = findBillsFlags.since
-	}
-	if sinceWindow <= 0 {
-		return fmt.Errorf("since must be positive")
-	}
-	since := time.Now().Add(-sinceWindow)
-	ctx := commandContext(cmd)
-
-	var messages []bills.Message
-	var txns []bills.Transaction
-	used := false
-
-	if findBillsFlags.sample {
-		if findBillsFlags.csv != "" {
-			return fmt.Errorf("--sample reads the embedded card export; do not also pass --csv")
-		}
-		used = true
-		reader, err := demo.CardExportReader()
-		if err != nil {
-			return err
-		}
-		parsed, err := bills.ParseCSV(reader)
-		if err != nil {
-			return err
-		}
-		txns = parsed
-	} else if findBillsFlags.csv != "" {
-		used = true
-		file, err := os.Open(findBillsFlags.csv)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		parsed, err := bills.ParseCSV(file)
-		if err != nil {
-			return err
-		}
-		txns = parsed
-	}
-
 	tokenPath := findBillsFlags.token
 	if tokenPath == "" {
 		tokenPath = os.Getenv("CLOUDRIPPER_GMAIL_TOKEN")
 	}
-	if tokenPath != "" && !findBillsFlags.sample {
-		used = true
-		gmail := bills.Gmail{TokenPath: tokenPath, Since: since}
-		got, err := gmail.Messages(ctx)
-		if err != nil {
-			return err
-		}
-		messages = append(messages, got...)
+	result, err := appruntime.FindBills(commandContext(cmd), cfg, appruntime.BillRequest{
+		CSVPath:      findBillsFlags.csv,
+		Sample:       findBillsFlags.sample,
+		GmailToken:   tokenPath,
+		Since:        findBillsFlags.since,
+		SinceChanged: cmd.Flags().Changed("since"),
+	})
+	if err != nil {
+		return err
 	}
-
-	if host := strings.TrimSpace(os.Getenv("CLOUDRIPPER_IMAP_HOST")); host != "" && !findBillsFlags.sample {
-		used = true
-		imap := bills.IMAP{
-			Host:     host,
-			Port:     os.Getenv("CLOUDRIPPER_IMAP_PORT"),
-			User:     os.Getenv("CLOUDRIPPER_IMAP_USER"),
-			Password: os.Getenv("CLOUDRIPPER_IMAP_PASSWORD"),
-			Mailbox:  os.Getenv("CLOUDRIPPER_IMAP_MAILBOX"),
-		}
-		got, err := imap.Messages(ctx, since)
-		if err != nil {
-			return err
-		}
-		messages = append(messages, got...)
-	}
-
-	if !used {
-		return fmt.Errorf("no bill source: set CLOUDRIPPER_IMAP_HOST, pass --gmail-token, pass --csv, or pass --sample")
-	}
-
-	findings := bills.Report(messages, txns, bills.Accounts{
-		AWS:        true,
-		GCP:        strings.TrimSpace(cfg.GCPProject) != "",
-		Azure:      strings.TrimSpace(cfg.AzureSubscription) != "",
-		Cloudflare: cloud.CloudflareConfigured(cfg.CloudflareAccountID, cfg.CloudflareAPIToken),
-	}, since)
+	findings := result.Findings
 
 	format, err := outputFormat()
 	if err != nil {

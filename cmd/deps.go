@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cost"
+	appruntime "github.com/AndrewGrayYouNeeK/Cloudripper/internal/runtime"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/scale"
 )
 
@@ -29,73 +29,17 @@ func defaultRuntime() runtime {
 }
 
 func defaultScan(ctx context.Context, cfg config.Config) ([]cloud.Resource, error) {
-	providers := buildProviders(cfg)
-	if len(providers) == 0 {
-		return nil, fmt.Errorf("no cloud providers configured — set AWS credentials, GCP_PROJECT, AZURE_SUBSCRIPTION_ID, or CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN")
-	}
-	return cloud.NewMultiScanner(providers...).ScanAll(ctx)
+	return appruntime.DefaultScan(ctx, cfg)
 }
 
 func defaultCosts(ctx context.Context, cfg config.Config, resources []cloud.Resource) (cost.Resolution, error) {
-	var sources []cost.Source
-	costRegion := cfg.AWSRegion
-	if cfg.AllRegions {
-		costRegion = ""
-	}
-	if explorer, err := cost.NewAWSExplorer(ctx, costRegion); err != nil {
-		sources = append(sources, cost.StaticSource{SourceName: cloud.CostSourceAWS, Err: err})
-	} else {
-		sources = append(sources, explorer)
-	}
-	if cfg.GCPProject != "" {
-		if cfg.GCPBillingTable == "" {
-			sources = append(sources, cost.StaticSource{SourceName: cloud.CostSourceGCP, Err: fmt.Errorf("GCP_BILLING_TABLE is not set")})
-		} else if queryer, err := cost.NewGCPQueryer(ctx, cfg.GCPProject); err != nil {
-			sources = append(sources, cost.StaticSource{SourceName: cloud.CostSourceGCP, Err: err})
-		} else {
-			sources = append(sources, &cost.GCPBilling{Table: cfg.GCPBillingTable, Query: queryer})
-		}
-	}
-	if cfg.AzureSubscription != "" {
-		if azureCost, err := cost.NewAzureCost(cfg.AzureSubscription, cfg.AzureResourceGroup); err != nil {
-			sources = append(sources, cost.StaticSource{SourceName: cloud.CostSourceAzure, Err: err})
-		} else {
-			sources = append(sources, azureCost)
-		}
-	}
-	if cloud.CloudflareConfigured(cfg.CloudflareAccountID, cfg.CloudflareAPIToken) {
-		sources = append(sources, cost.NewCloudflareBilling(cfg.CloudflareAccountID, cfg.CloudflareAPIToken))
-	}
-	return cost.Resolve(ctx, resources, sources), nil
+	return appruntime.DefaultCosts(ctx, cfg, resources)
 }
 
-func defaultExecutors(_ context.Context, cfg config.Config) ([]cloud.Executor, error) {
-	var execs []cloud.Executor
-	for _, provider := range buildProviders(cfg) {
-		exec, ok := provider.(cloud.Executor)
-		if !ok {
-			continue
-		}
-		execs = append(execs, exec)
-	}
-	if len(execs) == 0 {
-		return nil, fmt.Errorf("no cloud executors configured")
-	}
-	return execs, nil
+func defaultExecutors(ctx context.Context, cfg config.Config) ([]cloud.Executor, error) {
+	return appruntime.DefaultExecutors(ctx, cfg)
 }
 
 func defaultScalers(ctx context.Context, cfg config.Config) ([]scale.Controller, error) {
-	var controllers []scale.Controller
-	if awsCtrl, err := scale.NewAWSController(ctx, cfg.AWSRegion); err == nil {
-		controllers = append(controllers, awsCtrl)
-	}
-	if cfg.GCPProject != "" {
-		if gcpCtrl, err := scale.NewGCPController(ctx, cfg.GCPProject, cfg.GCPRegion); err == nil {
-			controllers = append(controllers, gcpCtrl)
-		}
-	}
-	if len(controllers) == 0 {
-		return nil, fmt.Errorf("no scaling controllers configured")
-	}
-	return controllers, nil
+	return appruntime.DefaultScalers(ctx, cfg)
 }

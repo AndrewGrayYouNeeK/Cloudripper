@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- A read-only desktop app lives in `desktop/` and is built with Wails v3.1.0. It opens on the embedded fictional sample, shows local AWS, GCP, Azure, and Cloudflare credential status without displaying secrets, and shows rip, cost, optimizer recommendations, and find-bills. It exports HTML, CSV, and JSON and can raise watch alerts through Slack, email, and an operating-system notification. It does not apply changes, scale, run schedules, or start chaos experiments.
+- The module requires Go 1.26.10. Wails v3 requires Go 1.26 or newer, and 1.26.10 includes the `crypto/x509` security fix. CLI release archives stay `CGO_ENABLED=0`.
+- Scan, cost, provider setup, demo loading, and find-bills orchestration used by the CLI now live in `internal/runtime`, which the desktop app calls. CLI commands and output are unchanged.
+
 ## [0.2.0] - 2026-11-10
 
 - `cloudripper demo` prints rip, cost, and optimize-style output from a fictional multi-cloud sample embedded in the binary. It does not use credentials or the network. Amounts are made up and are not real spend or real savings.

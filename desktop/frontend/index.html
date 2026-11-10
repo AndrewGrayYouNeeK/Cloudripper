@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>CloudRipper</title>
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+    <div class="brand">
+        <p class="mark">CloudRipper</p>
+        <p class="tag">Read-only desktop</p>
+    </div>
+    <p class="local" id="local-note">Inventory and spend stay on this machine. Cloud data is sent only to the cloud providers you connect, plus Slack or email when you start watch alerts.</p>
+    <button type="button" id="theme" class="theme" aria-pressed="false">Theme</button>
+</header>
+<nav class="nav" aria-label="Sections">
+    <ul>
+        <li><button type="button" data-screen="demo" aria-current="page">Demo</button></li>
+        <li><button type="button" data-screen="providers">Providers</button></li>
+        <li><button type="button" data-screen="inventory">Inventory</button></li>
+        <li><button type="button" data-screen="spend">Cost</button></li>
+        <li><button type="button" data-screen="recommendations">Recommendations</button></li>
+        <li><button type="button" data-screen="bills">Bills</button></li>
+        <li><button type="button" data-screen="watch">Watch</button></li>
+        <li><button type="button" data-screen="later">Later</button></li>
+    </ul>
+</nav>
+<main id="main" tabindex="-1">
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <section id="panel" aria-labelledby="panel-title"></section>
+</main>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
