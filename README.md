@@ -28,16 +28,21 @@ Find what you are paying for and not using, catch the cloud and developer subscr
 #    or build it yourself with Go 1.22+:
 go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest
 
-# 2. Point it at an account. AWS uses the normal SDK credential chain.
+# 2. Look at fictional sample output. No credentials and no network.
+#    The resources, costs, and savings figures are made up.
+cloudripper demo
+
+# 3. Point it at an account. AWS uses the normal SDK credential chain.
 export AWS_PROFILE=my-readonly-profile
 export AWS_REGION=us-east-1
 
-# 3. Scan, then look at spend and savings ideas
+# 4. Scan, then look at spend and savings ideas
 cloudripper rip                 # inventory what is running
 cloudripper cost                # estimated vs. actual trailing 30-day spend
 cloudripper optimize            # recommendations only; nothing changes without --apply
 
-# 4. Hunt for bills you forgot about (no cloud credentials needed)
+# 5. Hunt for bills you forgot about (no cloud credentials needed)
+cloudripper find-bills --sample
 cloudripper find-bills --csv card-export.csv
 ```
 
@@ -78,6 +83,7 @@ Pricing heuristics fill in when a billing API is missing or denies the call. Est
 ## Commands
 
 ```bash
+cloudripper demo
 cloudripper rip
 cloudripper cost
 cloudripper optimize
@@ -92,6 +98,8 @@ cloudripper find-bills --csv card-export.csv
 ```
 
 `--output table` (the default), `json`, `csv`, or `html` works on every command that prints rows. `CLOUDRIPPER_OUTPUT` sets the same value when the flag is omitted. CSV cells that start with `=`, `+`, `-`, or `@` are prefixed so spreadsheets do not treat them as formulas. `html` writes one document with inline CSS and no scripts, images, or network requests. Every value is escaped. An unpriced resource is `n/a`. Actual spend that the billing APIs did not return is `unavailable`, not `$0`.
+
+Table output uses ANSI color only when stdout is a terminal. `NO_COLOR` (any non-empty value) and `--no-color` turn it off. `json`, `csv`, and `html` are never colored.
 
 `--dry-run` previews mutations. `optimize`, `schedule`, and `scale` also require `--apply` before they will change anything, and `--dry-run` still wins if both are set. Live changes ask for one confirmation on a terminal, or accept `--yes` when stdin is not a terminal.
 
@@ -508,7 +516,8 @@ Unit tests use interfaces and fakes. They do not call AWS, GCP, or Azure.
 
 ```
 cmd/                  CLI commands
-internal/cloud/       AWS, GCP, and Azure inventory and mutations
+internal/cloud/       AWS, GCP, Azure, and Cloudflare inventory and mutations
+internal/demo/        Embedded fictional inventory, spend, and card export
 internal/cost/        Cost Explorer, BigQuery billing, Azure Cost Management
 internal/optimizer/   Recommendations
 internal/apply/       Confirmation, protect tags, IaC guard, audit
