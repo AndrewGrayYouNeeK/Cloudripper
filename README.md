@@ -127,6 +127,10 @@ A provider that fails mid-scan does not drop resources the other providers alrea
 
 Resource rows are replaced with actuals only when a resource-level billing row matches the resource ID or name. Otherwise priced rows keep their estimate (`cost_source=estimate`). Unpriced rows stay unavailable.
 
+`rip --output json` and `cost --output json` use the same document: `dry_run`, `estimated_total`, `actual_total`, `actual_available`, `unpriced_count`, `warnings`, `snapshots`, and `resources`. Resource objects are snake_case (`id`, `name`, `cost_usd`, `cost_source`, and the other inventory fields). Unpriced rows, including every Cloudflare inventory row, set `cost_usd` to `null`. Table and CSV show those rows as `n/a`. A priced AWS, GCP, or Azure row stays a number, including `0` when the estimate really is zero. `cost --output json` previously emitted exported Go names (`ID`, `CostUSD`, and the rest) and wrote `0` for unpriced rows. See [CHANGELOG](CHANGELOG.md).
+
+JSON money is rounded to the nearest cent: `estimated_total`, `actual_total`, each snapshot `total_usd`, and the snapshot service and resource amounts. A Cloudflare billing snapshot of $6.12 summed with a tiny Cost Explorer residual prints as `6.12`, not `6.1199999999`.
+
 The built-in prices are heuristics (a small EC2/GCE/Azure size table, plus flat monthly amounts for unattached IPs, load balancers, and Kubernetes control planes). They are not a price list. Cloudflare inventory does not invent list-price estimates.
 
 ## Optimize and schedule
@@ -262,7 +266,7 @@ Create a token in the Cloudflare dashboard (API Tokens), not a Global API Key. M
 | R2 inventory | `GET /accounts/{account_id}/r2/buckets` | Workers R2 Storage Read |
 | KV inventory | `GET /accounts/{account_id}/storage/kv/namespaces` | Workers KV Storage Read |
 | D1 inventory | `GET /accounts/{account_id}/d1/database` | D1 Read |
-| Pages inventory | `GET /accounts/{account_id}/pages/projects` | Pages Read (permission catalog label: Cloudflare Pages Read) |
+| Pages inventory | `GET /accounts/{account_id}/pages/projects` | Pages Read (permission catalog label: Cloudflare Pages Read). The client sends `per_page=10` and follows `page` until `total_pages` is exhausted. The API docs mark `per_page` as optional and show a sample of 20, but the live endpoint returns HTTP 400 for `per_page` above 10. |
 | Invoice/billing-history actuals | `GET /accounts/{account_id}/billing/history` | Billing Read |
 
 You can grant only the product reads you need. Missing scopes produce a warning for that product and leave other inventory intact. Billing Read is optional: without it, `cost`/`rip` still list resources and report Cloudflare actual spend as unavailable.

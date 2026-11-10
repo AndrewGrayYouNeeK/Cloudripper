@@ -117,6 +117,68 @@ func rowsFromResources(resources []cloud.Resource) []resourceRow {
 	return rows
 }
 
+// scanDocument is the shared `rip --output json` and `cost --output json` shape.
+// Resource fields are snake_case. Unpriced rows keep cost_usd null.
+type scanDocument struct {
+	DryRun          bool            `json:"dry_run"`
+	EstimatedTotal  float64         `json:"estimated_total"`
+	UnpricedCount   int             `json:"unpriced_count,omitempty"`
+	ActualTotal     float64         `json:"actual_total"`
+	ActualAvailable bool            `json:"actual_available"`
+	Warnings        []string        `json:"warnings,omitempty"`
+	Resources       []resourceRow   `json:"resources"`
+	Snapshots       []cost.Snapshot `json:"snapshots,omitempty"`
+}
+
+func scanPayload(cfg config.Config, res cost.Resolution) scanDocument {
+	rows := rowsFromResources(res.Resources)
+	for i := range rows {
+		if rows[i].CostUSD == nil {
+			continue
+		}
+		v := cost.RoundCents(*rows[i].CostUSD)
+		rows[i].CostUSD = &v
+	}
+	return scanDocument{
+		DryRun:          cfg.DryRun,
+		EstimatedTotal:  cost.RoundCents(res.EstimatedTotal),
+		UnpricedCount:   res.UnpricedCount,
+		ActualTotal:     cost.RoundCents(res.ActualTotal),
+		ActualAvailable: res.ActualAvailable,
+		Warnings:        res.Warnings,
+		Resources:       rows,
+		Snapshots:       roundSnapshotMoney(res.Snapshots),
+	}
+}
+
+func roundSnapshotMoney(in []cost.Snapshot) []cost.Snapshot {
+	if len(in) == 0 {
+		return in
+	}
+	out := make([]cost.Snapshot, len(in))
+	for i, snap := range in {
+		snap.TotalUSD = cost.RoundCents(snap.TotalUSD)
+		if len(snap.Services) > 0 {
+			services := make([]cost.ServiceCost, len(snap.Services))
+			for j, svc := range snap.Services {
+				svc.USD = cost.RoundCents(svc.USD)
+				services[j] = svc
+			}
+			snap.Services = services
+		}
+		if len(snap.Resources) > 0 {
+			resources := make([]cost.ResourceCost, len(snap.Resources))
+			for j, row := range snap.Resources {
+				row.USD = cost.RoundCents(row.USD)
+				resources[j] = row
+			}
+			snap.Resources = resources
+		}
+		out[i] = snap
+	}
+	return out
+}
+
 func resourceTable(rows []resourceRow) ([]string, [][]string) {
 	headers := []string{"PROVIDER", "TYPE", "ID", "NAME", "REGION", "STATUS", "SPEC", "USD", "SOURCE"}
 	out := make([][]string, 0, len(rows))

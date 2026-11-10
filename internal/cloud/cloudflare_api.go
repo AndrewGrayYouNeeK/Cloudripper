@@ -55,6 +55,7 @@ type cfResultInfo struct {
 	PerPage    int    `json:"per_page"`
 	Count      int    `json:"count"`
 	TotalCount int    `json:"total_count"`
+	TotalPages int    `json:"total_pages"`
 	Cursor     string `json:"cursor"`
 }
 
@@ -219,6 +220,16 @@ func (c *CloudflareAPI) getPaged(ctx context.Context, path string, query url.Val
 		current := page
 		if env.ResultInfo.Page > 0 {
 			current = env.ResultInfo.Page
+		}
+		// Pages (and some other list endpoints) report total_pages. Honor it
+		// before total_count so a short page is not treated as the last page.
+		if env.ResultInfo.TotalPages > 0 {
+			if current >= env.ResultInfo.TotalPages {
+				return nil
+			}
+			page = current + 1
+			cursor = ""
+			continue
 		}
 		if total > 0 && current*per >= total {
 			return nil
@@ -397,13 +408,23 @@ func (c *CloudflareAPI) ListD1Databases(ctx context.Context) ([]CloudflareD1Data
 	return all, err
 }
 
+// pagesListPerPage is the largest page size the live Pages list endpoint accepts.
+//
+// Docs mark per_page as optional and the sample result_info uses 20:
+// https://developers.cloudflare.com/api/resources/pages/subresources/projects/methods/list/
+// Omitting the parameter would keep that server default. A live read-only check
+// of GET /accounts/{account_id}/pages/projects returns HTTP 400
+// "Invalid list options provided. Review the page or per_page parameter"
+// for per_page 15, 20, 25, and 50, and HTTP 200 for 1, 5, and 10.
+const pagesListPerPage = 10
+
 // ListPagesProjects lists Cloudflare Pages projects (page pagination).
 // Endpoint: GET /accounts/{account_id}/pages/projects
 // Scope: Pages Read (API docs) / Cloudflare Pages Read (permission catalog).
 func (c *CloudflareAPI) ListPagesProjects(ctx context.Context) ([]CloudflarePagesProject, error) {
 	path := "/accounts/" + url.PathEscape(c.AccountID) + "/pages/projects"
 	var all []CloudflarePagesProject
-	err := c.getPaged(ctx, path, nil, nil, 20, func(result json.RawMessage, _ *cfResultInfo) error {
+	err := c.getPaged(ctx, path, nil, nil, pagesListPerPage, func(result json.RawMessage, _ *cfResultInfo) error {
 		var page []CloudflarePagesProject
 		if len(result) == 0 || string(result) == "null" {
 			return nil

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -111,6 +112,46 @@ func (f *fixedJurisdictionLister) ListD1Databases(ctx context.Context) ([]Cloudf
 }
 func (f *fixedJurisdictionLister) ListPagesProjects(ctx context.Context) ([]CloudflarePagesProject, error) {
 	return f.api.ListPagesProjects(ctx)
+}
+
+func TestListPagesProjectsPerPageAndPagination(t *testing.T) {
+	var calls int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.URL.Path, "/pages/projects") {
+			t.Errorf("unexpected path %s", r.URL.Path)
+			http.NotFound(w, r)
+			return
+		}
+		perRaw := r.URL.Query().Get("per_page")
+		per, err := strconv.Atoi(perRaw)
+		if err != nil || per <= 0 || per > 10 {
+			t.Errorf("per_page = %q, want a value from 1 to 10", perRaw)
+		}
+		calls++
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Query().Get("page") {
+		case "", "1":
+			io.WriteString(w, `{"success":true,"result":[{"id":"p1","name":"one"}],"result_info":{"page":1,"per_page":10,"count":1,"total_count":2,"total_pages":2},"errors":[],"messages":[]}`)
+		case "2":
+			io.WriteString(w, `{"success":true,"result":[{"id":"p2","name":"two"}],"result_info":{"page":2,"per_page":10,"count":1,"total_count":2,"total_pages":2},"errors":[],"messages":[]}`)
+		default:
+			t.Errorf("unexpected page %q", r.URL.Query().Get("page"))
+			w.WriteHeader(http.StatusBadRequest)
+		}
+	}))
+	defer srv.Close()
+
+	api := &CloudflareAPI{AccountID: "acct", Token: "tok", BaseURL: srv.URL, HTTP: srv.Client()}
+	got, err := api.ListPagesProjects(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if calls != 2 {
+		t.Fatalf("pages requests = %d, want both pages", calls)
+	}
+	if len(got) != 2 || got[0].ID != "p1" || got[1].ID != "p2" {
+		t.Fatalf("projects = %+v", got)
+	}
 }
 
 func TestCloudflarePartialFailureAndAuthError(t *testing.T) {

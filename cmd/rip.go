@@ -44,26 +44,7 @@ func runRip(cmd *cobra.Command, _ []string) error {
 	}
 
 	headers, table := resourceTable(rows)
-	payload := struct {
-		DryRun          bool            `json:"dry_run"`
-		EstimatedTotal  float64         `json:"estimated_total"`
-		UnpricedCount   int             `json:"unpriced_count,omitempty"`
-		ActualTotal     float64         `json:"actual_total"`
-		ActualAvailable bool            `json:"actual_available"`
-		Warnings        []string        `json:"warnings,omitempty"`
-		Resources       []resourceRow   `json:"resources"`
-		Snapshots       []cost.Snapshot `json:"snapshots,omitempty"`
-	}{
-		DryRun:          cfg.DryRun,
-		EstimatedTotal:  res.EstimatedTotal,
-		UnpricedCount:   res.UnpricedCount,
-		ActualTotal:     res.ActualTotal,
-		ActualAvailable: res.ActualAvailable,
-		Warnings:        res.Warnings,
-		Resources:       rows,
-		Snapshots:       res.Snapshots,
-	}
-	if err := render(cmd, headers, table, payload); err != nil {
+	if err := render(cmd, headers, table, scanPayload(cfg, res)); err != nil {
 		return err
 	}
 	if cfg.DryRun && format == output.FormatTable {
