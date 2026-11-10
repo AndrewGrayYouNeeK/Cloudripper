@@ -1,6 +1,7 @@
 package output
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,7 @@ const (
 	FormatTable Format = "table"
 	FormatJSON  Format = "json"
 	FormatCSV   Format = "csv"
+	FormatHTML  Format = "html"
 )
 
 // Parse resolves a format name.
@@ -27,8 +29,10 @@ func Parse(value string) (Format, error) {
 		return FormatJSON, nil
 	case "csv":
 		return FormatCSV, nil
+	case "html":
+		return FormatHTML, nil
 	default:
-		return "", fmt.Errorf("unknown output format %q (want table, json, or csv)", value)
+		return "", fmt.Errorf("unknown output format %q (want table, json, csv, or html)", value)
 	}
 }
 
@@ -59,9 +63,21 @@ func WriteCSV(w io.Writer, headers []string, rows [][]string) error {
 	return cw.Error()
 }
 
-// WriteTable writes an aligned text table.
+// WriteTable writes an aligned text table with no ANSI color.
 func WriteTable(w io.Writer, headers []string, rows [][]string) error {
-	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	return writeTable(w, headers, rows, false)
+}
+
+// WriteColorTable writes an aligned text table and then colors the header
+// and the tokens n/a and unavailable. Alignment is computed before the
+// escape codes are added. JSON, CSV, and HTML must not call this.
+func WriteColorTable(w io.Writer, headers []string, rows [][]string) error {
+	return writeTable(w, headers, rows, true)
+}
+
+func writeTable(w io.Writer, headers []string, rows [][]string, color bool) error {
+	var buf bytes.Buffer
+	tw := tabwriter.NewWriter(&buf, 0, 0, 2, ' ', 0)
 	if _, err := fmt.Fprintln(tw, strings.Join(headers, "\t")); err != nil {
 		return err
 	}
@@ -70,7 +86,37 @@ func WriteTable(w io.Writer, headers []string, rows [][]string) error {
 			return err
 		}
 	}
-	return tw.Flush()
+	if err := tw.Flush(); err != nil {
+		return err
+	}
+	text := buf.String()
+	if color {
+		text = colorizeTable(text)
+	}
+	_, err := io.WriteString(w, text)
+	return err
+}
+
+func colorizeTable(text string) string {
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		if line == "" {
+			continue
+		}
+		if i == 0 {
+			lines[i] = "\033[1;36m" + line + "\033[0m"
+			continue
+		}
+		lines[i] = colorizeToken(colorizeToken(line, "unavailable"), "n/a")
+	}
+	return strings.Join(lines, "\n")
+}
+
+func colorizeToken(line, token string) string {
+	if !strings.Contains(line, token) {
+		return line
+	}
+	return strings.ReplaceAll(line, token, "\033[2m"+token+"\033[0m")
 }
 
 func neutralize(cell string) string {

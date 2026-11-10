@@ -8,10 +8,13 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/bills"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cost"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/output"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/scale"
 )
 
@@ -546,6 +549,218 @@ func TestFindBillsCSV(t *testing.T) {
 	}
 	if strings.Contains(out2, "token-not-for-live-use") {
 		t.Fatal("token leaked into find-bills output")
+	}
+}
+
+func TestDemoFictionalSample(t *testing.T) {
+	useRuntime(t, nil, errors.New("demo must not scan"), nil, nil)
+	rt.scan = func(context.Context, config.Config) ([]cloud.Resource, error) {
+		t.Fatal("demo called the cloud scanner")
+		return nil, nil
+	}
+	rt.costs = func(context.Context, config.Config, []cloud.Resource) (cost.Resolution, error) {
+		t.Fatal("demo called the cost client")
+		return cost.Resolution{}, nil
+	}
+
+	out, stderr, err := runCLI(t, "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stderr != "" {
+		t.Fatalf("table demo should keep the banner on stdout, stderr=%q", stderr)
+	}
+	if strings.Contains(out, "\033") {
+		t.Fatalf("demo table on a pipe should not be colored:\n%s", out)
+	}
+	for _, needle := range []string{"FICTIONAL SAMPLE DATA", "not your cloud spend", "not real savings", "sample-worker", "n/a", "sample-protected"} {
+		if !strings.Contains(out, needle) {
+			t.Fatalf("table demo missing %q:\n%s", needle, out)
+		}
+	}
+	if strings.Contains(out, "] aws/sample-protected") {
+		t.Fatalf("protected sample was recommended:\n%s", out)
+	}
+
+	jsonOut, jsonErr, err := runCLI(t, "--output", "json", "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(jsonErr, "FICTIONAL SAMPLE DATA") {
+		t.Fatalf("json demo banner stderr=%q", jsonErr)
+	}
+	if !strings.Contains(jsonOut, `"fictional": true`) || !strings.Contains(jsonOut, `"network_calls": 0`) {
+		t.Fatalf("json demo = %s", jsonOut)
+	}
+	if strings.Contains(jsonOut, `"id": "i-sample-protected"`) {
+		// The protected instance stays in inventory. It must not be a recommendation.
+		rec := jsonOut[strings.Index(jsonOut, `"recommendations"`):]
+		if strings.Contains(rec, "i-sample-protected") {
+			t.Fatalf("protected resource recommended: %s", rec)
+		}
+	}
+	for _, bad := range []string{"http://", "https://"} {
+		if strings.Contains(jsonOut, bad) {
+			t.Fatalf("json demo contains %s", bad)
+		}
+	}
+
+	htmlOut, _, err := runCLI(t, "--output", "html", "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, needle := range []string{"FICTIONAL SAMPLE DATA", "n/a", "not real savings"} {
+		if !strings.Contains(htmlOut, needle) {
+			t.Fatalf("html demo missing %q", needle)
+		}
+	}
+	for _, bad := range []string{"<script", "http://", "https://", "src="} {
+		if strings.Contains(htmlOut, bad) {
+			t.Fatalf("html demo contains %s", bad)
+		}
+	}
+
+	csvOut, _, err := runCLI(t, "--output", "csv", "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(csvOut, "fictional") || !strings.Contains(csvOut, "sample-worker") {
+		t.Fatalf("csv demo = %s", csvOut)
+	}
+	if !strings.Contains(csvOut, "n/a") {
+		t.Fatalf("csv demo should show unpriced as n/a:\n%s", csvOut)
+	}
+}
+
+func TestFindBillsSample(t *testing.T) {
+	t.Setenv("CLOUDRIPPER_IMAP_HOST", "127.0.0.1")
+	t.Setenv("CLOUDRIPPER_IMAP_PORT", "1")
+	t.Setenv("CLOUDRIPPER_GMAIL_TOKEN", "")
+	out, stderr, err := runCLI(t, "find-bills", "--sample")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "FICTIONAL SAMPLE DATA") || !strings.Contains(out, "not real savings") {
+		t.Fatalf("sample bills = %s", out)
+	}
+	if stderr != "" {
+		t.Fatalf("table sample banner should be on stdout, stderr=%q", stderr)
+	}
+	if time.Since(time.Date(2026, 10, 28, 0, 0, 0, 0, time.UTC)) < 120*24*time.Hour {
+		if !strings.Contains(out, "DigitalOcean") || strings.Contains(strings.ToLower(out), "netflix") {
+			t.Fatalf("sample findings = %s", out)
+		}
+	}
+
+	jsonOut, jsonErr, err := runCLI(t, "--output", "json", "find-bills", "--sample")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(jsonErr, "FICTIONAL") || !strings.Contains(jsonOut, `"fictional": true`) || !strings.Contains(jsonOut, `"network_calls": 0`) {
+		t.Fatalf("json sample out=%s err=%s", jsonOut, jsonErr)
+	}
+	if strings.Contains(jsonOut, "FICTIONAL SAMPLE DATA") && !strings.Contains(jsonOut, `"banner"`) {
+		t.Fatal("json banner must be a field, not a prefix")
+	}
+
+	_, _, err = runCLI(t, "find-bills", "--sample", "--csv", "card.csv")
+	if err == nil || !strings.Contains(err.Error(), "--sample") {
+		t.Fatalf("expected --sample/--csv conflict, got %v", err)
+	}
+}
+
+func TestHTMLReportsForSpendCommands(t *testing.T) {
+	useRuntime(t, []cloud.Resource{
+		{ID: "i-1", Name: "<script>", Provider: "aws", Type: cloud.ResourceEC2, Status: "running", CostUSD: 10, CostSource: cloud.CostSourceEstimate},
+		{ID: "w", Name: "worker", Provider: "cloudflare", Type: cloud.ResourceCFWorker, Status: "active", CostUSD: 0, CostSource: cloud.CostSourceUnpriced},
+	}, nil, nil, nil)
+
+	for _, command := range []string{"rip", "cost", "optimize"} {
+		out, _, err := runCLI(t, "--output", "html", command)
+		if err != nil {
+			t.Fatalf("%s: %v", command, err)
+		}
+		if !strings.Contains(out, "Actual spend: unavailable") {
+			t.Fatalf("%s html missing unavailable actual:\n%s", command, out)
+		}
+		if strings.Contains(out, "$0.00") || strings.Contains(out, "<script") || strings.Contains(out, "http://") || strings.Contains(out, "src=") {
+			t.Fatalf("%s html leaked a tag, a URL, or a zero actual:\n%s", command, out)
+		}
+		if !strings.Contains(out, "n/a") {
+			t.Fatalf("%s html missing n/a:\n%s", command, out)
+		}
+	}
+
+	ripOut, _, err := runCLI(t, "--output", "html", "rip")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(ripOut, "&lt;script&gt;") {
+		t.Fatalf("rip html did not escape the name:\n%s", ripOut)
+	}
+
+	prev := rt
+	t.Cleanup(func() { rt = prev })
+	rt.costs = func(_ context.Context, _ config.Config, got []cloud.Resource) (cost.Resolution, error) {
+		return cost.Resolution{Resources: got, EstimatedTotal: sumCost(got), ActualTotal: 12, ActualAvailable: true}, nil
+	}
+	costOut, _, err := runCLI(t, "--output", "html", "cost")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(costOut, "Actual spend: $12.00") || strings.Contains(costOut, "Actual spend: unavailable") {
+		t.Fatalf("available actual = %s", costOut)
+	}
+
+	help, _, err := runCLI(t, "--help")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(help, "table, json, csv, or html") || !strings.Contains(help, "--no-color") {
+		t.Fatalf("help = %s", help)
+	}
+	jsonOut, _, err := runCLI(t, "--no-color", "--output", "json", "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(jsonOut, "\033") {
+		t.Fatal("json output contained color")
+	}
+}
+
+func TestFindBillsHTMLEscapes(t *testing.T) {
+	t.Setenv("CLOUDRIPPER_IMAP_HOST", "")
+	t.Setenv("CLOUDRIPPER_GMAIL_TOKEN", "")
+	path := t.TempDir() + "/card.csv"
+	body := "Date,Description,Amount\n2026-09-02,DIGITALOCEAN.COM <script>alert(1)</script>,-15.00\n"
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, _, err := runCLI(t, "--output", "html", "find-bills", "--csv", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out, "<script") || strings.Contains(out, "http://") || strings.Contains(out, "src=") {
+		t.Fatalf("find-bills html = %s", out)
+	}
+	if !strings.Contains(out, "DigitalOcean") {
+		t.Fatalf("find-bills html = %s", out)
+	}
+
+	resetCmdFlags(t)
+	buf := &bytes.Buffer{}
+	rootCmd.SetOut(buf)
+	err = renderSampleBills(rootCmd, output.FormatHTML, []bills.Finding{{
+		Provider: "<script>alert(1)</script>",
+		Status:   "possibly forgotten",
+		Source:   "csv",
+		Amount:   1,
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(buf.String(), "<script") || !strings.Contains(buf.String(), "&lt;script&gt;") {
+		t.Fatalf("sample html = %s", buf.String())
 	}
 }
 

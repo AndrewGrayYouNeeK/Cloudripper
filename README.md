@@ -28,16 +28,21 @@ Find what you are paying for and not using, catch the cloud and developer subscr
 #    or build it yourself with Go 1.22+:
 go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest
 
-# 2. Point it at an account. AWS uses the normal SDK credential chain.
+# 2. Look at fictional sample output. No credentials and no network.
+#    The resources, costs, and savings figures are made up.
+cloudripper demo
+
+# 3. Point it at an account. AWS uses the normal SDK credential chain.
 export AWS_PROFILE=my-readonly-profile
 export AWS_REGION=us-east-1
 
-# 3. Scan, then look at spend and savings ideas
+# 4. Scan, then look at spend and savings ideas
 cloudripper rip                 # inventory what is running
 cloudripper cost                # estimated vs. actual trailing 30-day spend
 cloudripper optimize            # recommendations only; nothing changes without --apply
 
-# 4. Hunt for bills you forgot about (no cloud credentials needed)
+# 5. Hunt for bills you forgot about (no cloud credentials needed)
+cloudripper find-bills --sample
 cloudripper find-bills --csv card-export.csv
 ```
 
@@ -51,7 +56,7 @@ cloudripper find-bills --csv card-export.csv
 - **Forgotten bills.** `find-bills` reads billing mail (IMAP or Gmail, read-only) and a card CSV for AWS, Google Cloud, Azure, DigitalOcean, Linode/Akamai, Vercel, Netlify, Heroku, Cloudflare, Supabase, Firebase, MongoDB Atlas, and OpenAI, and flags the ones you have not set up.
 - **Scheduling, scaling, and cost alerts.** `schedule`, `scale`, and `watch` stop idle compute on a schedule, scale groups from CPU, and alert Slack or email on spend spikes.
 - **Bounded chaos tests.** `chaos` runs Chaos Mesh or Gremlin experiments inside a blast-radius limit, and refuses production-looking targets without `--allow-prod`.
-- **Output you can script.** `--output table|json|csv` on every command that prints rows.
+- **Output you can script.** `--output table|json|csv|html` on every command that prints rows. HTML is one self-contained file: no external assets, values are escaped, unpriced costs are `n/a`, and missing actuals are `unavailable` rather than `$0`.
 
 ## Free and paid
 
@@ -78,6 +83,7 @@ Pricing heuristics fill in when a billing API is missing or denies the call. Est
 ## Commands
 
 ```bash
+cloudripper demo
 cloudripper rip
 cloudripper cost
 cloudripper optimize
@@ -91,7 +97,9 @@ cloudripper rip --all-regions
 cloudripper find-bills --csv card-export.csv
 ```
 
-`--output table` (the default), `json`, or `csv` works on every command that prints rows. `CLOUDRIPPER_OUTPUT` sets the same value when the flag is omitted. CSV cells that start with `=`, `+`, `-`, or `@` are prefixed so spreadsheets do not treat them as formulas.
+`--output table` (the default), `json`, `csv`, or `html` works on every command that prints rows. `CLOUDRIPPER_OUTPUT` sets the same value when the flag is omitted. CSV cells that start with `=`, `+`, `-`, or `@` are prefixed so spreadsheets do not treat them as formulas. `html` writes one document with inline CSS and no scripts, images, or network requests. Every value is escaped. An unpriced resource is `n/a`. Actual spend that the billing APIs did not return is `unavailable`, not `$0`.
+
+Table output uses ANSI color only when stdout is a terminal. `NO_COLOR` (any non-empty value) and `--no-color` turn it off. `json`, `csv`, and `html` are never colored.
 
 `--dry-run` previews mutations. `optimize`, `schedule`, and `scale` also require `--apply` before they will change anything, and `--dry-run` still wins if both are set. Live changes ask for one confirmation on a terminal, or accept `--yes` when stdin is not a terminal.
 
@@ -232,7 +240,7 @@ The `infrastructure/` Terraform stack and `pulumi/` program in this repo are sam
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | — |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token (not Global API Key). Keep out of logs and commits. | — |
 | `CLOUDRIPPER_AUDIT_LOG` | JSONL audit log | `cloudripper-audit.log` |
-| `CLOUDRIPPER_OUTPUT` | `table`, `json`, or `csv` | `table` |
+| `CLOUDRIPPER_OUTPUT` | `table`, `json`, `csv`, or `html` | `table` |
 | `SLACK_WEBHOOK_URL` | Slack incoming webhook | — |
 | `SMTP_HOST` / `SMTP_PORT` | Alert email server | port `587` |
 | `SMTP_USER` / `SMTP_PASSWORD` | SMTP auth, skipped when user is empty | — |
@@ -270,6 +278,184 @@ Create a token in the Cloudflare dashboard (API Tokens), not a Global API Key. M
 | Invoice/billing-history actuals | `GET /accounts/{account_id}/billing/history` | Billing Read |
 
 You can grant only the product reads you need. Missing scopes produce a warning for that product and leave other inventory intact. Billing Read is optional: without it, `cost`/`rip` still list resources and report Cloudflare actual spend as unavailable.
+
+## Minimum read-only permissions
+
+These lists are the read calls in this repository. They are not a live IAM simulation. `optimize --apply`, `schedule --apply`, and `scale --apply` need extra write permissions on AWS, GCP, and Azure. Cloudflare `Execute` returns an error and does not call a write API (`internal/cloud/cloudflare.go`).
+
+### AWS
+
+Read calls, by SDK method:
+
+| SDK call | Where | IAM action |
+| --- | --- | --- |
+| `ec2:DescribeInstances` | `internal/cloud/aws_scan.go`, and `internal/scale/aws.go` for an `ec2` policy | `ec2:DescribeInstances` |
+| `ec2:DescribeVolumes` | `internal/cloud/aws_scan.go` | `ec2:DescribeVolumes` |
+| `ec2:DescribeAddresses` | `internal/cloud/aws_scan.go` | `ec2:DescribeAddresses` |
+| `ec2:DescribeRegions` | `internal/cloud/regions.go`, only with `--all-regions` | `ec2:DescribeRegions` |
+| `rds:DescribeDBInstances` | `internal/cloud/aws_scan.go` | `rds:DescribeDBInstances` |
+| `s3:ListBuckets` | `internal/cloud/aws_scan.go` | `s3:ListAllMyBuckets` (the IAM action AWS documents for ListBuckets) |
+| `s3:GetBucketLocation` | `internal/cloud/aws_scan.go`, once per listed bucket | `s3:GetBucketLocation` |
+| `s3:GetBucketTagging` | `internal/cloud/aws_scan.go`, once per bucket kept for the scan | `s3:GetBucketTagging` |
+| `elasticloadbalancing:DescribeLoadBalancers` | `internal/cloud/aws_scan.go` | `elasticloadbalancing:DescribeLoadBalancers` |
+| `elasticloadbalancing:DescribeTargetGroups` | `internal/cloud/aws_scan.go` | `elasticloadbalancing:DescribeTargetGroups` |
+| `elasticloadbalancing:DescribeTargetHealth` | `internal/cloud/aws_scan.go`, once per target group | `elasticloadbalancing:DescribeTargetHealth` |
+| `lambda:ListFunctions` | `internal/cloud/aws_scan.go` | `lambda:ListFunctions` |
+| `eks:ListClusters` | `internal/cloud/aws_scan.go` | `eks:ListClusters` |
+| `eks:DescribeCluster` | `internal/cloud/aws_scan.go`, once per cluster name | `eks:DescribeCluster` |
+| `autoscaling:DescribeAutoScalingGroups` | `internal/cloud/aws_scan.go`, and `internal/scale/aws.go` | `autoscaling:DescribeAutoScalingGroups` |
+| `cloudwatch:GetMetricStatistics` | `internal/scale/aws.go` only (`scale`, not `rip`) | `cloudwatch:GetMetricStatistics` |
+| `ce:GetCostAndUsage` | `internal/cost/aws.go` | `ce:GetCostAndUsage` |
+| `ce:GetCostAndUsageWithResources` | `internal/cost/aws.go`, only when a region filter is set | `ce:GetCostAndUsageWithResources` |
+
+`s3:ListAllMyBuckets` is the action named on the [ListBuckets API page](https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html). The other IAM names match the SDK operation names above. This repo did not call `iam:SimulatePrincipalPolicy`.
+
+Policy for those read actions:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CloudRipperRead",
+      "Effect": "Allow",
+      "Action": [
+        "autoscaling:DescribeAutoScalingGroups",
+        "ce:GetCostAndUsage",
+        "ce:GetCostAndUsageWithResources",
+        "cloudwatch:GetMetricStatistics",
+        "ec2:DescribeAddresses",
+        "ec2:DescribeInstances",
+        "ec2:DescribeRegions",
+        "ec2:DescribeVolumes",
+        "eks:DescribeCluster",
+        "eks:ListClusters",
+        "elasticloadbalancing:DescribeLoadBalancers",
+        "elasticloadbalancing:DescribeTargetGroups",
+        "elasticloadbalancing:DescribeTargetHealth",
+        "lambda:ListFunctions",
+        "rds:DescribeDBInstances",
+        "s3:GetBucketLocation",
+        "s3:GetBucketTagging",
+        "s3:ListAllMyBuckets"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+`cloudwatch:GetMetricStatistics` is only used by `scale`. `ec2:DescribeRegions` is only used with `--all-regions`. Drop either action if you do not use that command.
+
+The published AWS managed policy [ReadOnlyAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/ReadOnlyAccess.html) version v191 (edited 2026-10-30) includes `ce:GetCostAndUsage`, `ce:GetCostAndUsageWithResources`, `ec2:Describe*`, `rds:Describe*`, `s3:Get*` and `s3:List*`, `elasticloadbalancing:Describe*`, `lambda:List*`, `eks:Describe*` and `eks:List*`, `autoscaling:Describe*`, and `cloudwatch:Get*`. That was read from the policy page while writing this section. It is not true of every historical version: the same page shows the policy has been edited many times. A permissions boundary, an SCP, or an older attached version can still omit Cost Explorer. Cost Explorer also has to be enabled in the Billing console before these actions return data. This repository did not attach the managed policy to an account.
+
+Writes used by apply and scale, and not included above, are in `internal/cloud/aws_exec.go` and `internal/scale/aws.go`: EC2 stop/start/terminate, `CreateTags`, `ModifyInstanceAttribute`, `DeleteVolume`, `ReleaseAddress`; RDS stop/start/`ModifyDBInstance`; `DeleteLoadBalancer`; Auto Scaling `SetDesiredCapacity` and EC2 `ModifyInstanceAttribute` for scale. RDS terminate is refused in code.
+
+### GCP
+
+Inventory in `internal/cloud/gcp_sdk.go` calls, when `GCP_PROJECT` is set:
+
+- `compute.instances.aggregatedList`, `disks.aggregatedList`, `addresses.aggregatedList`, `forwardingRules.aggregatedList`, `globalForwardingRules.list`, `instanceGroupManagers.aggregatedList`
+- `storage.buckets.list`
+- `cloudfunctions.projects.locations.functions.list`
+- `container.projects.locations.clusters.list` (one `Do()` call, not paged)
+
+Billing, when `GCP_BILLING_TABLE` is set, calls BigQuery `jobs.query` (`internal/cost/gcp_sdk.go`). `scale` calls Cloud Monitoring `timeSeries.list` (`internal/scale/gcp.go`).
+
+OAuth scopes requested by those clients, from `google.golang.org/api` v0.209.0 (the version in `go.mod`):
+
+| Client | Constant | Scope |
+| --- | --- | --- |
+| Compute, Storage, Cloud Functions, GKE | `CloudPlatformScope` | `https://www.googleapis.com/auth/cloud-platform` |
+| BigQuery | `bigquery.BigqueryScope` | `https://www.googleapis.com/auth/bigquery` |
+| Monitoring (`scale` only) | `monitoring.MonitoringReadScope` | `https://www.googleapis.com/auth/monitoring.read` |
+
+`cloud-platform` and `bigquery` are broader than the methods above. The code does not request a narrower scope.
+
+Roles checked against Google's IAM pages while writing this section:
+
+- [Compute Viewer](https://cloud.google.com/iam/docs/roles-permissions/compute) (`roles/compute.viewer`) is documented as read-only get and list of Compute Engine resources. The code's aggregatedList and list calls are the list surface for instances, disks, addresses, forwarding rules, and instance group managers. This section did not diff every permission token in that role.
+- [BigQuery Job User](https://cloud.google.com/bigquery/docs/access-control) (`roles/bigquery.jobUser`) includes `bigquery.jobs.create`, which is what `jobs.query` needs to start a job.
+- BigQuery Data Viewer (`roles/bigquery.dataViewer`), granted on the billing export dataset, is documented as permission to get and query table data. The export table also has to exist. Both the job role and data access are required; the job role alone cannot read the table.
+
+Cloud Functions list, GKE cluster list, `storage.buckets.list`, and Monitoring `timeSeries.list` are called by the code. This section did not re-check which predefined role contains each of those permission tokens, including `storage.buckets.list` for `Buckets.List`. Confirm the current role on [Google's IAM role reference](https://cloud.google.com/iam/docs/roles-overview) before you grant one.
+
+### Azure
+
+When `AZURE_SUBSCRIPTION_ID` is set, `internal/cloud/azure_sdk.go` lists:
+
+- virtual machines (`NewListAllPager`) and, for each VM that passes the optional resource-group filter, `InstanceView`
+- disks, public IP addresses, load balancers, storage accounts, web apps (Function apps are the sites whose kind contains `functionapp`), and AKS managed clusters
+
+`internal/cost/azure.go` calls Cost Management `QueryClient.Usage` once per run, scope `/subscriptions/{id}`.
+
+Microsoft's [Cost Management scopes](https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/understand-work-scopes) page lists the built-in Reader role as read-only for the Query API, and Cost Management Reader as view-only access to cost data. Reader is the role that also covers ordinary resource reads; Cost Management Reader is not an inventory role. This section did not download the Reader role definition, so it does not claim that role JSON contains every action the SDK emits. The SDK calls above are what the code issues.
+
+### Cloudflare
+
+The token scope table in [Configuration](#cloudflare-token-scopes-read-only) is the permission list. Inventory is read-only. Billing history is a separate Billing Read call and is not required to list Workers, R2, KV, D1, or Pages. Per-resource Cloudflare costs stay unpriced.
+
+## What will this cost me in API calls?
+
+Counts below are what this code issues. List calls that loop on a page token make one request per page, so a small account is one request per list and a large account is more. Credential or token fetches made by the SDKs are not included. `demo` and `find-bills --sample` make none.
+
+### Commands that scan and read spend
+
+`rip`, `cost`, `optimize`, and `schedule` each call `loadResolution` once (`cmd/ui.go`): one inventory scan, then one pass over the configured billing sources. `watch` does that same collection on every sample (`cmd/watch.go`, `internal/watch/watch.go`). The first sample runs immediately. Later samples run on `WATCH_INTERVAL` (default 15 minutes) until the process stops. `watch --once` is a single collection.
+
+AWS is always attempted. For one region, with every list fitting in a single page:
+
+| Call | Requests |
+| --- | --- |
+| `DescribeInstances`, `DescribeVolumes`, `DescribeDBInstances`, `DescribeLoadBalancers`, `DescribeTargetGroups`, `ListFunctions`, `ListClusters`, `DescribeAutoScalingGroups` | 1 per call, plus another request for each extra page |
+| `DescribeTargetHealth` | 1 per target group |
+| `DescribeCluster` | 1 per cluster name returned by `ListClusters` |
+| `DescribeAddresses` | 1 (not paged) |
+| `ListBuckets` | 1, plus another request for each extra page |
+| `GetBucketLocation` | 1 per bucket `ListBuckets` returned, including buckets outside the scanned region |
+| `GetBucketTagging` | 1 per bucket kept after the region check |
+
+`--all-regions` adds one `DescribeRegions`, repeats the non-S3 scan once per enabled region, and lists S3 once. Opt-in regions that are not enabled are skipped.
+
+Cost Explorer (`internal/cost/aws.go`), on each `rip`, `cost`, `optimize`, `schedule`, or `watch` sample, when the client is constructed:
+
+- `GetCostAndUsage`: 1 request. The client does not follow `NextPageToken`.
+- `GetCostAndUsageWithResources`: 1 request when a region is set. 0 requests with `--all-regions`, because the region filter is cleared and the resource-level call is skipped.
+
+If `NewAWSExplorer` fails, that sample sends no Cost Explorer request and records a warning.
+
+GCP runs only when `GCP_PROJECT` is set. Each aggregatedList or list is one HTTP request per page. GKE `clusters.list` is one request. BigQuery is one `jobs.query` when `GCP_BILLING_TABLE` is set, and no BigQuery request when it is empty (the source fails locally with "GCP_BILLING_TABLE is not set").
+
+Azure runs only when `AZURE_SUBSCRIPTION_ID` is set. Each list pager is at least one request, plus one `InstanceView` per virtual machine that passes the resource-group filter. Cost Management `QueryClient.Usage` is one request.
+
+Cloudflare runs only when both `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` are set. Inventory (`internal/cloud/cloudflare.go`, `internal/cloud/cloudflare_api.go`):
+
+| Endpoint | Requests |
+| --- | --- |
+| `GET /accounts/{id}/workers/scripts` | 1 (not paged) |
+| `GET /accounts/{id}/r2/buckets` | at least 1 for each of `default`, `eu`, and `us`; more when a cursor is returned (`per_page` 100) |
+| `GET /accounts/{id}/storage/kv/namespaces` | at least 1 (`per_page` 100) |
+| `GET /accounts/{id}/d1/database` | at least 1 (`per_page` 100) |
+| `GET /accounts/{id}/pages/projects` | at least 1 (`per_page` 10). The live endpoint returns HTTP 400 for `per_page` above 10, so the client does not use the sample value of 20. |
+
+Billing history is a separate paged `GET /accounts/{id}/billing/history` (`per_page` 50), one or more requests, and only on the cost pass.
+
+### Other commands
+
+| Command | Cloud billing and inventory APIs |
+| --- | --- |
+| `scale` | No Cost Explorer, BigQuery, Azure Cost Management, or Cloudflare billing. AWS: paged `DescribeAutoScalingGroups`, `DescribeInstances` for an `ec2` policy, and one `GetMetricStatistics` per group. GCP: paged instance-group list and one Monitoring `timeSeries.list` per group. |
+| `find-bills` | No cloud inventory or cost APIs. IMAP or Gmail only when those sources are configured. `--csv` is a local file. `--sample` is the embedded file and does not use the network. |
+| `chaos` | No cloud billing APIs. With `CHAOS_ENDPOINT` unset it prints a plan and does not POST. With an endpoint it POSTs to that URL. |
+| `demo` | No network. |
+
+Slack and email run only when `watch` raises an alert and `SLACK_WEBHOOK_URL` or the SMTP variables are set. They are not called on every sample.
+
+### Cost Explorer price
+
+AWS's [Cost Explorer pricing page](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/pricing/) says each API request against the primary billing view costs $0.01, and the [Cost Explorer FAQ](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/faqs/) says a paginated result bills each page as a separate request. Checked against those pages while writing this section. This CLI sends one `GetCostAndUsage` and, unless `--all-regions` skips it, one `GetCostAndUsageWithResources`, and it does not page those responses. That is two Cost Explorer requests per `rip`, `cost`, `optimize`, or `schedule` run in the default single-region case, and one request with `--all-regions`. `watch` repeats that count on every sample. The same pricing page says a request that uses a custom billing view costs $0.01 per source view. This CLI does not set a billing view.
+
+Prices for the other AWS calls, and for GCP, Azure, and Cloudflare, are not stated here. Check each provider's current pricing page.
 
 ## Install
 
@@ -334,7 +520,8 @@ Unit tests use interfaces and fakes. They do not call AWS, GCP, or Azure.
 
 ```
 cmd/                  CLI commands
-internal/cloud/       AWS, GCP, and Azure inventory and mutations
+internal/cloud/       AWS, GCP, Azure, and Cloudflare inventory and mutations
+internal/demo/        Embedded fictional inventory, spend, and card export
 internal/cost/        Cost Explorer, BigQuery billing, Azure Cost Management
 internal/optimizer/   Recommendations
 internal/apply/       Confirmation, protect tags, IaC guard, audit

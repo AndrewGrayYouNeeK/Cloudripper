@@ -63,6 +63,13 @@ func outputFormat() (output.Format, error) {
 	return output.Parse(value)
 }
 
+func writeFormattedTable(w io.Writer, headers []string, rows [][]string) error {
+	if output.ColorEnabled(w, noColor) {
+		return output.WriteColorTable(w, headers, rows)
+	}
+	return output.WriteTable(w, headers, rows)
+}
+
 func auditLogger(cfg config.Config) *audit.Logger {
 	if cfg.AuditLog == "" {
 		return nil
@@ -215,8 +222,16 @@ func render(cmd *cobra.Command, headers []string, rows [][]string, payload any) 
 		return output.WriteJSON(w, payload)
 	case output.FormatCSV:
 		return output.WriteCSV(w, headers, rows)
+	case output.FormatHTML:
+		return output.WriteHTML(w, output.HTMLReport{
+			Title: "cloudripper",
+			Sections: []output.HTMLSection{{
+				Headers: headers,
+				Rows:    rows,
+			}},
+		})
 	case output.FormatTable:
-		return output.WriteTable(w, headers, rows)
+		return writeFormattedTable(w, headers, rows)
 	default:
 		return fmt.Errorf("unhandled output format %q", format)
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/apply"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cost"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/iac"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/optimizer"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/output"
@@ -51,20 +52,24 @@ func runOptimize(cmd *cobra.Command, _ []string) error {
 	}
 	result := optimizer.Analyze(res.Resources)
 	if !optimizeFlags.apply {
-		return printAnalysis(cmd, result, cfg.DryRun)
+		return printAnalysis(cmd, result, res, cfg.DryRun)
 	}
 	recs := optimizer.WithImmediateSchedule(result.Recommendations, time.Now().UTC())
 	records, err := executeRecs(cmd, cfg, recs, "optimize", optimizeFlags.forceIaC, optimizeFlags.state, optimizeFlags.planDir)
 	if err != nil {
 		return err
 	}
-	return printApply(cmd, result, records)
+	return printApply(cmd, result, res, records)
 }
 
-func printAnalysis(cmd *cobra.Command, result optimizer.Result, dryRun bool) error {
+func printAnalysis(cmd *cobra.Command, result optimizer.Result, res cost.Resolution, dryRun bool) error {
 	format, err := outputFormat()
 	if err != nil {
 		return err
+	}
+	if format == output.FormatHTML {
+		headers, rows := recommendationTable(result.Recommendations)
+		return writeOptimizeHTML(cmd, res, result, dryRun, "Recommendations", headers, rows)
 	}
 	if format == output.FormatTable {
 		fmt.Fprint(cmd.OutOrStdout(), optimizer.FormatReport(result))
@@ -78,10 +83,14 @@ func printAnalysis(cmd *cobra.Command, result optimizer.Result, dryRun bool) err
 	return render(cmd, headers, rows, result)
 }
 
-func printApply(cmd *cobra.Command, result optimizer.Result, records []apply.Record) error {
+func printApply(cmd *cobra.Command, result optimizer.Result, res cost.Resolution, records []apply.Record) error {
 	format, err := outputFormat()
 	if err != nil {
 		return err
+	}
+	if format == output.FormatHTML {
+		headers, rows := recordTable(records)
+		return writeOptimizeHTML(cmd, res, result, false, "Apply results", headers, rows)
 	}
 	payload := struct {
 		Monthly          float64                    `json:"monthly_cost"`

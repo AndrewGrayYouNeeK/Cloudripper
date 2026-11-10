@@ -43,5 +43,8 @@ func runCost(cmd *cobra.Command, _ []string) error {
 	}
 	rows := rowsFromResources(res.Resources)
 	headers, table := resourceTable(rows)
+	if format == output.FormatHTML {
+		return writeSpendHTML(cmd, "CloudRipper cost", res, headers, table, nil)
+	}
 	return render(cmd, headers, table, scanPayload(cfg, res))
 }
