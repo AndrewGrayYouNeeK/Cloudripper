@@ -12,7 +12,7 @@
         <key>CFBundleVersion</key>
             <string>0.3.0</string>
         <key>CFBundleGetInfoString</key>
-            <string>Unsigned read-only build. CloudRipper does not send cloud data to a hosted backend.</string>
+            <string>Read-only build. CloudRipper does not send cloud data to a hosted backend.</string>
         <key>CFBundleShortVersionString</key>
             <string>0.3.0</string>
         <key>CFBundleIconFile</key>

@@ -10,7 +10,7 @@ info:
   productIdentifier: "dev.youneek.cloudripper"
   description: "Read-only desktop app for cloud inventory, spend, recommendations, bills, and cost alerts"
   copyright: "© 2026 YouNeeK"
-  comments: "Unsigned read-only build. CloudRipper does not send cloud data to a hosted backend."
+  comments: "Read-only build. CloudRipper does not send cloud data to a hosted backend."
   version: "0.3.0"
   # cfBundleIconName: "appicon" # The macOS icon name in Assets.car icon bundles (optional)
   #                               # Should match the name of your .icon file without the extension
