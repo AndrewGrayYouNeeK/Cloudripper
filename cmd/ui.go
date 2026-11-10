@@ -13,6 +13,7 @@ import (
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cost"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/output"
+	appruntime "github.com/AndrewGrayYouNeeK/Cloudripper/internal/runtime"
 	"github.com/spf13/cobra"
 )
 
@@ -282,24 +283,7 @@ func writeSkips(w io.Writer, cfg config.Config) {
 }
 
 func skippedProviders(cfg config.Config) []string {
-	var lines []string
-	if strings.TrimSpace(cfg.GCPProject) == "" {
-		lines = append(lines, "skipped: GCP project is not set (set GCP_PROJECT or --gcp-project)")
-	}
-	if strings.TrimSpace(cfg.AzureSubscription) == "" {
-		lines = append(lines, "skipped: Azure subscription is not set (set AZURE_SUBSCRIPTION_ID or --azure-subscription)")
-	}
-	account := strings.TrimSpace(cfg.CloudflareAccountID)
-	token := strings.TrimSpace(cfg.CloudflareAPIToken)
-	switch {
-	case account == "" && token == "":
-		lines = append(lines, "skipped: Cloudflare is not set (set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN)")
-	case account == "":
-		lines = append(lines, "skipped: Cloudflare account id is not set (set CLOUDFLARE_ACCOUNT_ID or --cloudflare-account)")
-	case token == "":
-		lines = append(lines, "skipped: Cloudflare API token is not set (set CLOUDFLARE_API_TOKEN)")
-	}
-	return lines
+	return appruntime.SkippedProviders(cfg)
 }
 
 func writeScanProblems(w io.Writer, err error) {

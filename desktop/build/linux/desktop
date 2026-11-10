@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=CloudRipper
+Comment=Read-only desktop app for CloudRipper
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/cloudripper-desktop %u
+Terminal=false
+Type=Application
+Icon=cloudripper-desktop
+Categories=Utility;
+StartupWMClass=cloudripper-desktop
+
+ 

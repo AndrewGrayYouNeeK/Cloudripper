@@ -1,0 +1,114 @@
+name: Desktop
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macos-universal
+            os: macos-latest
+            task: darwin
+          - name: windows-amd64
+            os: windows-latest
+            task: windows
+            arch: amd64
+          - name: windows-arm64
+            os: windows-11-arm
+            task: windows
+            arch: arm64
+          - name: linux-amd64
+            os: ubuntu-24.04
+            task: linux
+            arch: amd64
+          - name: linux-arm64
+            os: ubuntu-24.04-arm
+            task: linux
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.10"
+          cache-dependency-path: go.sum
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: desktop/frontend/package-lock.json
+
+      - name: Install Linux webview libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc pkg-config libgtk-4-dev libwebkitgtk-6.0-dev libfuse2t64
+
+      - name: Install NSIS
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          choco install nsis --no-progress -y
+          for dir in "/c/Program Files (x86)/NSIS" "/c/Program Files/NSIS"; do
+            if [ -f "$dir/makensis.exe" ]; then
+              echo "$dir" >> "$GITHUB_PATH"
+              echo "NSIS: $dir"
+            fi
+          done
+
+      - name: Install Wails v3.1.0
+        shell: bash
+        run: |
+          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.1.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Build unsigned packages
+        shell: bash
+        working-directory: desktop
+        run: |
+          set -euo pipefail
+          case "${{ matrix.task }}" in
+            darwin)
+              wails3 task darwin:package:universal
+              wails3 task darwin:create:dmg
+              ;;
+            windows)
+              nsis_path=""
+              for dir in "/c/Program Files (x86)/NSIS" "/c/Program Files/NSIS"; do
+                if [ -f "$dir/makensis.exe" ]; then
+                  nsis_path="$dir"
+                  break
+                fi
+              done
+              if [ -z "$nsis_path" ]; then
+                echo "makensis.exe was not found" >&2
+                exit 1
+              fi
+              export PATH="$nsis_path:$PATH"
+              wails3 task windows:package ARCH="${{ matrix.arch }}"
+              ;;
+            linux)
+              wails3 task linux:create:appimage ARCH="${{ matrix.arch }}"
+              wails3 task linux:create:deb ARCH="${{ matrix.arch }}"
+              wails3 task linux:create:rpm ARCH="${{ matrix.arch }}"
+              ;;
+          esac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cloudripper-desktop-${{ matrix.name }}
+          path: desktop/bin/
+          if-no-files-found: error

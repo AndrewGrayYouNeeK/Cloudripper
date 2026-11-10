@@ -9,7 +9,7 @@
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
   <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/AndrewGrayYouNeeK/Cloudripper/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="go.mod"><img alt="Go 1.22+" src="https://img.shields.io/badge/Go-1.22%2B-00ADD8?logo=go&logoColor=white"></a>
+  <a href="go.mod"><img alt="Go 1.26.10+" src="https://img.shields.io/badge/Go-1.26.10%2B-00ADD8?logo=go&logoColor=white"></a>
   <a href="https://cloudripper.youneek.dev"><img alt="Website" src="https://img.shields.io/badge/site-cloudripper.youneek.dev-8b5cf6"></a>
 </p>
 
@@ -25,7 +25,7 @@ Find what you are paying for and not using, catch the cloud and developer subscr
 
 ```bash
 # 1. Install: grab a prebuilt binary from the Releases page (no Go needed),
-#    or build it yourself with Go 1.22+:
+#    or build it yourself with Go 1.26.10+:
 go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest
 
 # 2. Look at fictional sample output. No credentials and no network.
@@ -457,6 +457,45 @@ AWS's [Cost Explorer pricing page](https://aws.amazon.com/aws-cost-management/aw
 
 Prices for the other AWS calls, and for GCP, Azure, and Cloudflare, are not stated here. Check each provider's current pricing page.
 
+## Desktop app
+
+The desktop app in [`desktop/`](desktop/) is a free, read-only companion to the CLI. It is built with [Wails v3.1.0](https://wails.io/) and the system webview (WebView2, WKWebView, or WebKitGTK 6.0). It does not apply changes, scale groups, run schedules, or start chaos experiments. Those stay in the CLI for a later version.
+
+What this version does:
+
+- Opens on the same embedded fictional sample as `cloudripper demo`. The figures are made up. The sample screen does not read credentials and does not use the network.
+- Shows whether AWS, GCP, Azure, and Cloudflare credentials were found, are missing, or failed a local check. It uses the same credential chains and environment variables as the CLI. It does not display or store secret values.
+- Shows read-only inventory (`rip`), cost, optimizer recommendations, and find-bills, including the embedded card sample.
+- Exports HTML, CSV, and JSON through the same `internal/output` writers as the CLI.
+- Runs `watch` alerts through the existing Slack and email notifiers, and also posts an operating-system notification. Watch does not enforce schedules.
+
+Cloud inventory and spend stay on this machine. The app calls the cloud providers' own APIs when you run a live scan or watch sample. It calls Slack or SMTP only if you start watch and those variables are set. There is no hosted CloudRipper backend.
+
+Builds from CI are unsigned. macOS Gatekeeper and Windows SmartScreen will warn when you open them. Linux packages are unsigned as well. Review the workflow artifacts before you run them.
+
+### Build locally
+
+The desktop build uses CGO and the platform webview libraries. The CLI build does not: `CGO_ENABLED=0` archives are unchanged.
+
+Install Go 1.26.10 or newer, Node.js, and a C compiler. On Linux use the GTK4 and WebKitGTK 6.0 libraries (Ubuntu 24.04+, Debian 13+, Fedora 40+):
+
+```bash
+# Ubuntu 24.04
+sudo apt-get install gcc libgtk-4-dev libwebkitgtk-6.0-dev pkg-config
+```
+
+Then, from the repository root:
+
+```bash
+go install github.com/wailsapp/wails/v3/cmd/wails3@v3.1.0
+cd desktop
+wails3 task build
+```
+
+The binary is `desktop/bin/cloudripper-desktop`. Package an unsigned AppImage, deb, and rpm with `wails3 task linux:package`. On macOS, `wails3 task darwin:package:universal` builds a universal app and `wails3 task darwin:create:dmg` builds a DMG. On Windows, `wails3 task windows:package` builds an NSIS installer (NSIS must be installed).
+
+`go build ./...` and `go test ./...` skip `desktop/` unless you pass `-tags desktop`, so the pure-Go CLI build does not need WebKit or CGO. When you tidy modules, use `GOFLAGS=-tags=desktop go mod tidy` so the Wails requirement stays in `go.mod`.
+
 ## Install
 
 Prebuilt binaries: download the archive for your system from the [latest release](https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest) (Linux, macOS, and Windows; amd64 and arm64). Check it against `checksums.txt`, unpack it, and put `cloudripper` on your `PATH`. For example, on Linux amd64:
@@ -471,7 +510,7 @@ cloudripper --help
 
 The binaries are not code-signed, so macOS may ask you to allow it in System Settings, and Windows SmartScreen may warn.
 
-Or with Go 1.22 or newer:
+Or with Go 1.26.10 or newer:
 
 ```bash
 go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest
@@ -520,6 +559,8 @@ Unit tests use interfaces and fakes. They do not call AWS, GCP, or Azure.
 
 ```
 cmd/                  CLI commands
+desktop/              Read-only Wails desktop app (build tag: desktop)
+internal/runtime/     Scan, cost, demo, bills, and watch orchestration shared by the CLI and desktop app
 internal/cloud/       AWS, GCP, Azure, and Cloudflare inventory and mutations
 internal/demo/        Embedded fictional inventory, spend, and card export
 internal/cost/        Cost Explorer, BigQuery billing, Azure Cost Management
