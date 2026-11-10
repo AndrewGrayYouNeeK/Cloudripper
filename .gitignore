@@ -2,7 +2,8 @@
 cloudripper-audit.log
 desktop/bin/
 desktop/frontend/node_modules/
-desktop/frontend/dist/
+desktop/frontend/dist/*
+!desktop/frontend/dist/index.html
 desktop/frontend/bindings/
 desktop/.task/
 desktop/.wails/

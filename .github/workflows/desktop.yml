@@ -62,7 +62,11 @@ jobs:
         shell: bash
         run: |
           choco install nsis --no-progress -y
-          echo "/c/Program Files (x86)/NSIS" >> "$GITHUB_PATH"
+          for dir in "/c/Program Files (x86)/NSIS" "/c/Program Files/NSIS"; do
+            if [ -x "$dir/makensis.exe" ]; then
+              echo "$dir" >> "$GITHUB_PATH"
+            fi
+          done
 
       - name: Install Wails v3.1.0
         shell: bash

@@ -188,8 +188,6 @@ tasks:
     generates:
       - frontend/bindings/**/*
     cmds:
-      - mkdir -p {{.ROOT_DIR}}/frontend/dist
-      - test -f {{.ROOT_DIR}}/frontend/dist/index.html || printf '%s\n' '<!doctype html><title>CloudRipper</title>' > {{.ROOT_DIR}}/frontend/dist/index.html
       - wails3 generate bindings -f '{{.BUILD_FLAGS}}' -clean=true{{if eq .OBFUSCATED "true"}} -obfuscated{{end}} -ts -i
 
   generate:icons:
