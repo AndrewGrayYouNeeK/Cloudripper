@@ -25,6 +25,9 @@ func loadConfig() config.Config {
 	if azureResourceGroup != "" {
 		cfg.AzureResourceGroup = azureResourceGroup
 	}
+	if cloudflareAccountID != "" {
+		cfg.CloudflareAccountID = cloudflareAccountID
+	}
 	if auditLog != "" {
 		cfg.AuditLog = auditLog
 	}
@@ -48,6 +51,9 @@ func buildProviders(cfg config.Config) []cloud.Provider {
 	}
 	if cfg.AzureSubscription != "" {
 		providers = append(providers, cloud.NewAzureProvider(cfg.AzureSubscription, cfg.AzureResourceGroup))
+	}
+	if cloud.CloudflareConfigured(cfg.CloudflareAccountID, cfg.CloudflareAPIToken) {
+		providers = append(providers, cloud.NewCloudflareProvider(cfg.CloudflareAccountID, cfg.CloudflareAPIToken))
 	}
 
 	return providers

@@ -267,6 +267,8 @@ func TestCostWarningPrintsOnce(t *testing.T) {
 func TestUnconfiguredCloudsAreSkipped(t *testing.T) {
 	t.Setenv("GCP_PROJECT", "")
 	t.Setenv("AZURE_SUBSCRIPTION_ID", "")
+	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "")
+	t.Setenv("CLOUDFLARE_API_TOKEN", "")
 	useRuntime(t, []cloud.Resource{{
 		ID: "i-1", Provider: "aws", Type: cloud.ResourceEC2, Status: "running", CostUSD: 1,
 	}}, nil, nil, nil)
@@ -274,8 +276,126 @@ func TestUnconfiguredCloudsAreSkipped(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(stderr, "skipped: GCP project is not set") || !strings.Contains(stderr, "skipped: Azure subscription is not set") {
+	if !strings.Contains(stderr, "skipped: GCP project is not set") ||
+		!strings.Contains(stderr, "skipped: Azure subscription is not set") ||
+		!strings.Contains(stderr, "skipped: Cloudflare is not set") {
 		t.Fatalf("stderr = %s", stderr)
+	}
+}
+
+func TestBuildProvidersIncludesCloudflare(t *testing.T) {
+	cfg := config.Config{
+		CloudflareAccountID: "acct",
+		CloudflareAPIToken:  "token",
+	}
+	providers := buildProviders(cfg)
+	var saw bool
+	for _, p := range providers {
+		if p.Name() == "cloudflare" {
+			saw = true
+		}
+	}
+	if !saw {
+		t.Fatalf("providers missing cloudflare: %#v", providers)
+	}
+}
+
+func TestCloudflareCostUnavailableWarning(t *testing.T) {
+	prev := rt
+	t.Cleanup(func() { rt = prev })
+	warning := "billing-history: cloudflare billing history unavailable (needs Account Billing Read on the API token): permission denied"
+	rt = runtime{
+		scan: func(context.Context, config.Config) ([]cloud.Resource, error) {
+			return []cloud.Resource{{
+				ID: "api", Provider: "cloudflare", Type: cloud.ResourceCFWorker, Status: "active", CostUSD: 0, CostSource: cloud.CostSourceUnpriced,
+			}}, nil
+		},
+		costs: func(context.Context, config.Config, []cloud.Resource) (cost.Resolution, error) {
+			return cost.Resolution{
+				Resources: []cloud.Resource{{
+					ID: "api", Provider: "cloudflare", Type: cloud.ResourceCFWorker, CostUSD: 0, CostSource: cloud.CostSourceUnpriced,
+				}},
+				EstimatedTotal:  0,
+				UnpricedCount:   1,
+				ActualAvailable: false,
+				Warnings:        []string{warning, "estimated_total excludes 1 unpriced resource(s); per-resource cost is unavailable for those rows (not a $0 estimate)"},
+			}, nil
+		},
+		executors: func(context.Context, config.Config) ([]cloud.Executor, error) { return nil, nil },
+		scalers:   func(context.Context, config.Config) ([]scale.Controller, error) { return nil, nil },
+	}
+	out, stderr, err := runCLI(t, "cost")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(stderr, warning) {
+		t.Fatalf("stderr = %s", stderr)
+	}
+	if strings.Contains(out, "Actual spend (trailing window): $0.00") {
+		t.Fatalf("must not present missing Cloudflare billing as $0 actual:\n%s", out)
+	}
+	if !strings.Contains(out, "Actual spend: unavailable") {
+		t.Fatalf("output = %s", out)
+	}
+	if !strings.Contains(out, "n/a") || !strings.Contains(out, "unpriced") {
+		t.Fatalf("expected unpriced/n/a presentation, got:\n%s", out)
+	}
+}
+
+func TestCloudflareUnpricedJSONNullCost(t *testing.T) {
+	resources := []cloud.Resource{
+		{ID: "api", Provider: "cloudflare", Type: cloud.ResourceCFWorker, Status: "active", CostUSD: 0, CostSource: cloud.CostSourceUnpriced},
+		{ID: "i-1", Provider: "aws", Type: cloud.ResourceEC2, Status: "running", CostUSD: 10, CostSource: cloud.CostSourceEstimate},
+	}
+	prev := rt
+	t.Cleanup(func() { rt = prev })
+	rt = runtime{
+		scan: func(context.Context, config.Config) ([]cloud.Resource, error) {
+			return resources, nil
+		},
+		costs: func(_ context.Context, _ config.Config, got []cloud.Resource) (cost.Resolution, error) {
+			return cost.Resolve(context.Background(), got, nil), nil
+		},
+		executors: func(context.Context, config.Config) ([]cloud.Executor, error) { return nil, nil },
+		scalers:   func(context.Context, config.Config) ([]scale.Controller, error) { return nil, nil },
+	}
+	out, _, err := runCLI(t, "--output", "json", "rip")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, `"cost_usd": null`) || !strings.Contains(out, `"cost_source": "unpriced"`) {
+		t.Fatalf("expected null unpriced cost, got %s", out)
+	}
+	if !strings.Contains(out, `"estimated_total": 10`) || !strings.Contains(out, `"unpriced_count": 1`) {
+		t.Fatalf("mixed totals incomplete coverage missing: %s", out)
+	}
+	if !strings.Contains(out, `"cost_usd": 10`) {
+		t.Fatalf("aws priced row should keep numeric cost: %s", out)
+	}
+}
+
+func TestCloudflareProviderSelectionAndNoMutation(t *testing.T) {
+	resetCmdFlags(t)
+	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "acct")
+	t.Setenv("CLOUDFLARE_API_TOKEN", "token")
+	cfg := loadConfig()
+	providers := buildProviders(cfg)
+	var cf cloud.Executor
+	for _, p := range providers {
+		if p.Name() == "cloudflare" {
+			if exec, ok := p.(cloud.Executor); ok {
+				cf = exec
+			}
+		}
+	}
+	if cf == nil {
+		t.Fatal("expected cloudflare executor from buildProviders")
+	}
+	_, err := cf.Execute(context.Background(), cloud.Resource{
+		ID: "api", Provider: "cloudflare", Type: cloud.ResourceCFWorker,
+	}, "terminate", "")
+	if err == nil || !strings.Contains(err.Error(), "read-only") {
+		t.Fatalf("expected read-only refuse, got %v", err)
 	}
 }
 
@@ -284,8 +404,10 @@ func TestFindBillsCSV(t *testing.T) {
 	t.Setenv("CLOUDRIPPER_GMAIL_TOKEN", "")
 	t.Setenv("GCP_PROJECT", "")
 	t.Setenv("AZURE_SUBSCRIPTION_ID", "")
+	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "")
+	t.Setenv("CLOUDFLARE_API_TOKEN", "")
 	path := t.TempDir() + "/card.csv"
-	body := "Date,Description,Amount\n2026-09-02,DIGITALOCEAN.COM,-15.00\n2026-09-03,AMAZON WEB SERVICES,-42.50\n2026-08-01,STARBUCKS,-4.50\n"
+	body := "Date,Description,Amount\n2026-09-02,DIGITALOCEAN.COM,-15.00\n2026-09-03,AMAZON WEB SERVICES,-42.50\n2026-09-04,CLOUDFLARE,-9.00\n2026-08-01,STARBUCKS,-4.50\n"
 	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -302,8 +424,24 @@ func TestFindBillsCSV(t *testing.T) {
 	if !strings.Contains(out, "AWS") || !strings.Contains(out, "configured") {
 		t.Fatalf("output = %s", out)
 	}
+	if !strings.Contains(out, "Cloudflare") || !strings.Contains(out, "possibly forgotten") {
+		t.Fatalf("expected unconfigured Cloudflare bill, got %s", out)
+	}
 	if strings.Contains(strings.ToLower(out), "starbucks") {
 		t.Fatalf("output = %s", out)
+	}
+
+	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "acct")
+	t.Setenv("CLOUDFLARE_API_TOKEN", "token-not-for-live-use")
+	out2, _, err := runCLI(t, "--output", "json", "find-bills", "--csv", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out2, "Cloudflare") || !strings.Contains(out2, `"configured": "true"`) {
+		t.Fatalf("expected Cloudflare configured when account+token set, got %s", out2)
+	}
+	if strings.Contains(out2, "token-not-for-live-use") {
+		t.Fatal("token leaked into find-bills output")
 	}
 }
 
@@ -328,7 +466,7 @@ func TestMissingCredentialsGivesFriendlyError(t *testing.T) {
 			t.Fatalf("%s: expected a credentials error, got %v", command, err)
 		}
 		msg := err.Error()
-		for _, want := range []string{"AWS", "aws configure", "AWS_PROFILE", "gcloud auth application-default login", "az login", "README", "#readme"} {
+		for _, want := range []string{"AWS", "aws configure", "AWS_PROFILE", "gcloud auth application-default login", "az login", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN", "README", "#readme"} {
 			if !strings.Contains(msg, want) {
 				t.Fatalf("%s: message missing %q:\n%s", command, want, msg)
 			}

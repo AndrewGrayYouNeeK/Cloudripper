@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/bills"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/cloud"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +30,8 @@ read, deleted, or flagged. Gmail uses GET requests against an OAuth token file.
 Passwords and tokens are not written to the output or the audit log.
 
 AWS is treated as configured because CloudRipper always scans it. GCP is
-configured when GCP_PROJECT is set, and Azure when AZURE_SUBSCRIPTION_ID is set.
+configured when GCP_PROJECT is set, Azure when AZURE_SUBSCRIPTION_ID is set,
+and Cloudflare when CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN are set.
 Any other recognized provider is marked possibly forgotten.
 
 IMAP environment: CLOUDRIPPER_IMAP_HOST, CLOUDRIPPER_IMAP_PORT (993),
@@ -111,9 +113,10 @@ func runFindBills(cmd *cobra.Command, _ []string) error {
 	}
 
 	findings := bills.Report(messages, txns, bills.Accounts{
-		AWS:   true,
-		GCP:   strings.TrimSpace(cfg.GCPProject) != "",
-		Azure: strings.TrimSpace(cfg.AzureSubscription) != "",
+		AWS:        true,
+		GCP:        strings.TrimSpace(cfg.GCPProject) != "",
+		Azure:      strings.TrimSpace(cfg.AzureSubscription) != "",
+		Cloudflare: cloud.CloudflareConfigured(cfg.CloudflareAccountID, cfg.CloudflareAPIToken),
 	}, since)
 
 	format, err := outputFormat()

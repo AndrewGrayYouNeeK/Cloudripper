@@ -89,7 +89,7 @@ type resourceRow struct {
 	Region     string            `json:"region"`
 	Status     string            `json:"status"`
 	Spec       string            `json:"spec,omitempty"`
-	CostUSD    float64           `json:"cost_usd"`
+	CostUSD    *float64          `json:"cost_usd"`
 	CostSource string            `json:"cost_source,omitempty"`
 	Tags       map[string]string `json:"tags,omitempty"`
 }
@@ -97,7 +97,7 @@ type resourceRow struct {
 func rowsFromResources(resources []cloud.Resource) []resourceRow {
 	rows := make([]resourceRow, 0, len(resources))
 	for _, r := range resources {
-		rows = append(rows, resourceRow{
+		row := resourceRow{
 			Provider:   r.Provider,
 			Type:       string(r.Type),
 			ID:         r.ID,
@@ -105,10 +105,14 @@ func rowsFromResources(resources []cloud.Resource) []resourceRow {
 			Region:     r.Region,
 			Status:     r.Status,
 			Spec:       r.Spec,
-			CostUSD:    r.CostUSD,
 			CostSource: r.CostSource,
 			Tags:       r.Tags,
-		})
+		}
+		if r.CostPriced() {
+			v := r.CostUSD
+			row.CostUSD = &v
+		}
+		rows = append(rows, row)
 	}
 	return rows
 }
@@ -117,6 +121,12 @@ func resourceTable(rows []resourceRow) ([]string, [][]string) {
 	headers := []string{"PROVIDER", "TYPE", "ID", "NAME", "REGION", "STATUS", "SPEC", "USD", "SOURCE"}
 	out := make([][]string, 0, len(rows))
 	for _, row := range rows {
+		usd := "n/a"
+		if row.CostUSD != nil {
+			usd = fmt.Sprintf("%.2f", *row.CostUSD)
+		} else if row.CostSource == "" {
+			usd = "0.00"
+		}
 		out = append(out, []string{
 			row.Provider,
 			row.Type,
@@ -125,7 +135,7 @@ func resourceTable(rows []resourceRow) ([]string, [][]string) {
 			row.Region,
 			row.Status,
 			row.Spec,
-			fmt.Sprintf("%.2f", row.CostUSD),
+			usd,
 			row.CostSource,
 		})
 	}
@@ -164,7 +174,16 @@ func loadResolution(cmd *cobra.Command) (config.Config, cost.Resolution, error) 
 	res, cerr := rt.costs(ctx, cfg, resources)
 	if cerr != nil {
 		warnf(cmd, "%v", cerr)
-		res = cost.Resolution{Resources: resources, EstimatedTotal: sumCost(resources)}
+		unpriced := 0
+		for _, r := range resources {
+			if !r.CostPriced() {
+				unpriced++
+			}
+		}
+		res = cost.Resolution{Resources: resources, EstimatedTotal: sumCost(resources), UnpricedCount: unpriced}
+		if unpriced > 0 {
+			res.Warnings = []string{fmt.Sprintf("estimated_total excludes %d unpriced resource(s); per-resource cost is unavailable for those rows (not a $0 estimate)", unpriced)}
+		}
 	}
 	format, ferr := outputFormat()
 	if ferr != nil {
@@ -192,6 +211,16 @@ func skippedProviders(cfg config.Config) []string {
 	}
 	if strings.TrimSpace(cfg.AzureSubscription) == "" {
 		lines = append(lines, "skipped: Azure subscription is not set (set AZURE_SUBSCRIPTION_ID or --azure-subscription)")
+	}
+	account := strings.TrimSpace(cfg.CloudflareAccountID)
+	token := strings.TrimSpace(cfg.CloudflareAPIToken)
+	switch {
+	case account == "" && token == "":
+		lines = append(lines, "skipped: Cloudflare is not set (set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN)")
+	case account == "":
+		lines = append(lines, "skipped: Cloudflare account id is not set (set CLOUDFLARE_ACCOUNT_ID or --cloudflare-account)")
+	case token == "":
+		lines = append(lines, "skipped: Cloudflare API token is not set (set CLOUDFLARE_API_TOKEN)")
 	}
 	return lines
 }
@@ -231,6 +260,8 @@ func humanizeScanLine(line string) string {
 		return "skipped: GCP credentials are not available (set application default credentials)"
 	case strings.Contains(lower, "azure") && (strings.Contains(lower, "credential") || strings.Contains(lower, "defaultazurecredential")):
 		return "skipped: Azure credentials are not available (set Azure CLI or environment credentials)"
+	case strings.Contains(lower, "cloudflare") && (strings.Contains(lower, "api token not configured") || strings.Contains(lower, "account id not configured") || strings.Contains(lower, "permission denied") || strings.Contains(lower, "unauthorized")):
+		return "skipped: Cloudflare credentials are not available or lack permission (set CLOUDFLARE_ACCOUNT_ID and a read-scoped CLOUDFLARE_API_TOKEN)"
 	default:
 		return "warning: " + line
 	}
@@ -239,6 +270,9 @@ func humanizeScanLine(line string) string {
 func sumCost(resources []cloud.Resource) float64 {
 	var total float64
 	for _, r := range resources {
+		if !r.CostPriced() {
+			continue
+		}
 		total += r.CostUSD
 	}
 	return total

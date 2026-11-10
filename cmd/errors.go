@@ -11,9 +11,10 @@ const readmeURL = "https://github.com/AndrewGrayYouNeeK/Cloudripper#readme"
 
 // credentialHelp tells people how to set up each provider's credentials.
 var credentialHelp = map[string]string{
-	"aws":   "AWS:   run `aws configure`, or set AWS_PROFILE (or AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY)",
-	"gcp":   "GCP:   run `gcloud auth application-default login`, and set GCP_PROJECT",
-	"azure": "Azure: run `az login`, and set AZURE_SUBSCRIPTION_ID",
+	"aws":        "AWS:        run `aws configure`, or set AWS_PROFILE (or AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY)",
+	"gcp":        "GCP:        run `gcloud auth application-default login`, and set GCP_PROJECT",
+	"azure":      "Azure:      run `az login`, and set AZURE_SUBSCRIPTION_ID",
+	"cloudflare": "Cloudflare: set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN (API token, not Global API Key)",
 }
 
 // credentialsError is a short, readable "no credentials" failure. It carries
@@ -30,7 +31,7 @@ func (e *credentialsError) Error() string {
 		fmt.Fprintf(&b, "no credentials found for %s.\n", strings.Join(labels(e.providers), ", "))
 	}
 	b.WriteString("\nSet up at least one cloud, then run the command again:\n")
-	for _, p := range []string{"aws", "gcp", "azure"} {
+	for _, p := range []string{"aws", "gcp", "azure", "cloudflare"} {
 		b.WriteString("  " + credentialHelp[p] + "\n")
 	}
 	fmt.Fprintf(&b, "\nSee the README for details: %s", readmeURL)
@@ -38,7 +39,7 @@ func (e *credentialsError) Error() string {
 }
 
 func labels(providers []string) []string {
-	names := map[string]string{"aws": "AWS", "gcp": "GCP", "azure": "Azure"}
+	names := map[string]string{"aws": "AWS", "gcp": "GCP", "azure": "Azure", "cloudflare": "Cloudflare"}
 	out := make([]string, 0, len(providers))
 	for _, p := range providers {
 		if n, ok := names[p]; ok {
@@ -63,6 +64,8 @@ func isCredentialProblem(line string) bool {
 		"defaultazurecredential",
 		"no valid credential",
 		"credentials are not available",
+		"api token not configured",
+		"account id not configured",
 	} {
 		if strings.Contains(lower, marker) {
 			return true

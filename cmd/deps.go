@@ -31,7 +31,7 @@ func defaultRuntime() runtime {
 func defaultScan(ctx context.Context, cfg config.Config) ([]cloud.Resource, error) {
 	providers := buildProviders(cfg)
 	if len(providers) == 0 {
-		return nil, fmt.Errorf("no cloud providers configured — set AWS credentials, GCP_PROJECT, or AZURE_SUBSCRIPTION_ID")
+		return nil, fmt.Errorf("no cloud providers configured — set AWS credentials, GCP_PROJECT, AZURE_SUBSCRIPTION_ID, or CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN")
 	}
 	return cloud.NewMultiScanner(providers...).ScanAll(ctx)
 }
@@ -62,6 +62,9 @@ func defaultCosts(ctx context.Context, cfg config.Config, resources []cloud.Reso
 		} else {
 			sources = append(sources, azureCost)
 		}
+	}
+	if cloud.CloudflareConfigured(cfg.CloudflareAccountID, cfg.CloudflareAPIToken) {
+		sources = append(sources, cost.NewCloudflareBilling(cfg.CloudflareAccountID, cfg.CloudflareAPIToken))
 	}
 	return cost.Resolve(ctx, resources, sources), nil
 }

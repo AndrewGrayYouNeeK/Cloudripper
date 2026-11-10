@@ -10,10 +10,12 @@ import (
 
 var ripCmd = &cobra.Command{
 	Use:   "rip",
-	Short: "Scan AWS, GCP, and Azure and report what is running",
-	Long: `Connects to configured clouds, discovers compute, storage, network, and
-Kubernetes inventory, and overlays actual spend when billing APIs respond.
-Resource costs stay on the built-in estimate when a billing source is unavailable.`,
+	Short: "Scan AWS, GCP, Azure, and Cloudflare and report what is running",
+	Long: `Connects to configured clouds, discovers compute, storage, network,
+Kubernetes, and Cloudflare developer-platform inventory, and overlays actual
+spend when billing APIs respond. Priced resource costs stay on the built-in
+estimate when a billing source is unavailable. Cloudflare inventory is
+unpriced (cost unknown / n/a), not a $0 estimate.`,
 	RunE: runRip,
 }
 
@@ -45,6 +47,7 @@ func runRip(cmd *cobra.Command, _ []string) error {
 	payload := struct {
 		DryRun          bool            `json:"dry_run"`
 		EstimatedTotal  float64         `json:"estimated_total"`
+		UnpricedCount   int             `json:"unpriced_count,omitempty"`
 		ActualTotal     float64         `json:"actual_total"`
 		ActualAvailable bool            `json:"actual_available"`
 		Warnings        []string        `json:"warnings,omitempty"`
@@ -53,6 +56,7 @@ func runRip(cmd *cobra.Command, _ []string) error {
 	}{
 		DryRun:          cfg.DryRun,
 		EstimatedTotal:  res.EstimatedTotal,
+		UnpricedCount:   res.UnpricedCount,
 		ActualTotal:     res.ActualTotal,
 		ActualAvailable: res.ActualAvailable,
 		Warnings:        res.Warnings,

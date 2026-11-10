@@ -9,6 +9,8 @@ func TestLoadEnv(t *testing.T) {
 	t.Setenv("AWS_REGION", "eu-west-1")
 	t.Setenv("GCP_BILLING_TABLE", "p.d.t")
 	t.Setenv("AZURE_SUBSCRIPTION_ID", "sub")
+	t.Setenv("CLOUDFLARE_ACCOUNT_ID", "cfacct")
+	t.Setenv("CLOUDFLARE_API_TOKEN", "cftoken")
 	t.Setenv("WATCH_INTERVAL", "5m")
 	t.Setenv("WATCH_THRESHOLD", "40")
 	t.Setenv("CHAOS_MAX_TARGETS", "3")
@@ -17,6 +19,9 @@ func TestLoadEnv(t *testing.T) {
 	cfg := Load()
 	if cfg.AWSRegion != "eu-west-1" || cfg.GCPBillingTable != "p.d.t" || cfg.AzureSubscription != "sub" {
 		t.Fatalf("cfg = %+v", cfg)
+	}
+	if cfg.CloudflareAccountID != "cfacct" || cfg.CloudflareAPIToken != "cftoken" {
+		t.Fatalf("cloudflare cfg = %+v", cfg)
 	}
 	if cfg.WatchInterval != 5*time.Minute || cfg.WatchThreshold != 40 || cfg.ChaosMaxTargets != 3 || !cfg.DryRun {
 		t.Fatalf("cfg = %+v", cfg)
