@@ -52,8 +52,8 @@ nav a:hover{color:var(--text)}
 h1{font-size:clamp(2rem,5.2vw,3.5rem);line-height:1.1;margin:18px auto 16px;max-width:880px;letter-spacing:-.03em}
 h1 em{font-style:normal;background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .lead{color:var(--mute);font-size:1.15rem;max-width:680px;margin:0 auto 28px}
-.install{display:flex;align-items:center;gap:8px;max-width:760px;margin:0 auto;background:#060a18;border:1px solid var(--line);border-radius:12px;padding:10px 10px 10px 16px;text-align:left}
-.install code{flex:1;overflow-x:auto;white-space:nowrap;font:0.95rem ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#c7d7f5;padding:4px 0}
+.install{display:flex;align-items:center;gap:8px;width:100%;max-width:760px;min-width:0;margin:0 auto;background:#060a18;border:1px solid var(--line);border-radius:12px;padding:10px 10px 10px 16px;text-align:left}
+.install code{flex:1;min-width:0;overflow-x:auto;white-space:nowrap;font:0.95rem ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#c7d7f5;padding:4px 0}
 .install code b{color:var(--ok);font-weight:400}
 button,.btn{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:#1a2650;color:var(--text);padding:10px 16px;text-decoration:none;display:inline-block;font-weight:600}
 button:hover,.btn:hover{background:#22327006;border-color:var(--acc)}
@@ -102,6 +102,59 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--mute);fo
 footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 footer a{margin-right:16px}
 @media (max-width:560px){nav{display:none}.hero{padding-top:32px}}
+
+.os-tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 auto 18px;max-width:760px}
+.os-tabs [role=tab]{display:inline-flex;flex-direction:column;align-items:center;min-width:7.5rem}
+.os-tabs [role=tab][aria-selected="true"]{background:linear-gradient(90deg,#0ea5e9,#6366f1);border-color:transparent;color:#fff}
+.tab-note{display:block;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#86efac}
+.os-tabs [role=tab][aria-selected="true"] .tab-note,.os-tabs [role=tab][aria-selected="true"] .match-pill{color:#ecfdf5}
+.phone-note{display:none;max-width:760px;margin:0 auto 22px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;text-align:center}
+.phone-note p{margin:0 0 12px;color:var(--text)}
+.phone-note .row{justify-content:center}
+body.is-phone .phone-note{display:block}
+@media (max-width:720px){.phone-note{display:block}}
+.panel-lead,.desktop-soon{color:var(--mute);text-align:center;max-width:680px;margin:0 auto 16px}
+.desktop-soon{margin-top:28px;color:var(--text);font-weight:600}
+.arch-picker{display:none;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin:0 auto 8px;max-width:760px}
+.js .arch-picker{display:flex}
+.arch-picker label{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:#ffffff08}
+.arch-picker label:has(input:checked){border-color:var(--acc)}
+.arch-help{flex-basis:100%;margin:0;text-align:center;color:var(--mute);font-size:.92rem}
+.match-pill{color:var(--ok);font-size:.78rem;font-weight:700}
+.arch-title{max-width:760px;margin:18px auto 8px;font-size:1.05rem}
+.walk{max-width:760px;margin:0 auto;padding:0;list-style:none;display:grid;gap:12px;counter-reset:dl;min-width:0}
+.walk li{counter-increment:dl;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;min-width:0}
+.walk h4{margin:0 0 6px;font-size:1.05rem}
+.walk h4::before{content:counter(dl) ". ";color:var(--acc)}
+.walk p{margin:8px 0 0;color:var(--mute)}
+.walk p:first-of-type{margin-top:0}
+.walk .btn{margin-top:8px;max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:center}
+.js .arch-block{display:none}
+.js .show-all .arch-block,.js .arch-block.on{display:block}
+.cmdrow{display:flex;align-items:center;gap:8px;width:100%;max-width:100%;min-width:0;background:#060a18;border:1px solid var(--line);border-radius:12px;padding:8px 8px 8px 14px;margin-top:10px}
+.cmdrow code{flex:1;min-width:0;overflow-x:auto;white-space:nowrap;font:0.85rem ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#c7d7f5}
+.cmdrow button{flex:0 0 auto}
+.term{position:relative;width:100%;max-width:760px;min-width:0;margin:8px auto 0;background:#060a18;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.term-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#101833;color:var(--mute);font-size:.85rem}
+.term-bar span:nth-child(2){flex:1}
+.dots{display:inline-flex;gap:6px}
+.dots i{width:10px;height:10px;border-radius:50%;display:block;background:#25315a}
+.dots i:nth-child(1){background:#f87171}.dots i:nth-child(2){background:#fbbf24}.dots i:nth-child(3){background:#34d399}
+.term-replay{font-size:.85rem;padding:6px 10px}
+.term-frame,.term-live{display:block;width:0;min-width:100%;box-sizing:border-box;margin:0;max-height:420px;overflow:auto;padding:14px 16px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#c7d7f5;white-space:pre}
+.prompt{color:var(--ok)}
+.term-live{display:none}
+.js-play .term-frame{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.js-play .term-live{display:block}
+.caret{display:inline-block;width:7px;height:1em;background:#c7d7f5;margin-left:2px;vertical-align:text-bottom;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+#demo-term-title{text-align:center;margin:8px 0 8px;font-size:1.35rem}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){
+  .caret{animation:none}
+  .term-live{display:none!important}
+  .js-play .term-frame{position:static;width:0;min-width:100%;height:auto;padding:14px 16px;margin:0;overflow:auto;clip:auto;white-space:pre}
+}
 </style>
 </head>
 <body>
@@ -109,7 +162,7 @@ footer a{margin-right:16px}
 <div class="wrap">
 <header class="top">
   <a class="logo" href="/" aria-label="YouNeeK CloudRipper home"><img src="/logo-mark.webp" width="40" height="40" alt="">YouNeeK <span>CloudRipper</span></a>
-  <nav aria-label="Primary"><a href="#features">Features</a><a href="#how">How it works</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="https://github.com/AndrewGrayYouNeeK/Cloudripper">GitHub</a></nav>
+  <nav aria-label="Primary"><a href="#download">Download</a><a href="#features">Features</a><a href="#how">How it works</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="https://github.com/AndrewGrayYouNeeK/Cloudripper">GitHub</a></nav>
 </header>
 </div>
 <main id="main">
@@ -123,13 +176,295 @@ footer a{margin-right:16px}
     <code id="cmd"><b>$</b> go install github.com/AndrewGrayYouNeeK/Cloudripper/cmd/cloudripper@latest</code>
     <button type="button" id="copy" aria-label="Copy install command">Copy</button>
   </div>
-  <p class="lead" style="font-size:.95rem;margin:10px 0 0">No Go installed? <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest">Download a prebuilt binary</a> for Linux, macOS, or Windows.</p>
+  <p class="lead" style="font-size:.95rem;margin:10px 0 0">No Go installed? <a href="#download">Download a prebuilt binary</a> for Linux, macOS, or Windows.</p>
   <div class="cta">
+    <a class="btn primary" href="#download">Download the CLI</a>
     <a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper">View on GitHub</a>
     <a class="btn" href="#pricing">See pricing</a>
   </div>
 </div>
 </div>
+
+<section id="download"><div class="wrap">
+  <h2>Download</h2>
+  <p class="sub">Prebuilt v0.2.0 binaries for Windows, macOS, and Linux. No Go required. The files are the <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/tag/v0.2.0">v0.2.0 release</a>. The binaries are not code-signed. If you have Go 1.26.10 or newer, the <code>go install</code> command at the top of the page works too.</p>
+  <div class="phone-note" id="phone-note">
+    <p><strong>CloudRipper is a command-line tool for computers.</strong> Copy this page or share it, then open it on a computer to download and run the CLI.</p>
+    <div class="row">
+      <button type="button" class="primary" id="copy-link">Copy link</button>
+      <button type="button" id="share-link" hidden>Share</button>
+    </div>
+  </div>
+  <div class="os-tabs" role="tablist" aria-label="Operating system">
+    <button type="button" role="tab" id="tab-windows" aria-controls="panel-windows" aria-selected="false" tabindex="-1">Windows</button>
+    <button type="button" role="tab" id="tab-macos" aria-controls="panel-macos" aria-selected="false" tabindex="-1">macOS</button>
+    <button type="button" role="tab" id="tab-linux" aria-controls="panel-linux" aria-selected="true" tabindex="0">Linux</button>
+  </div>
+  <div role="tabpanel" class="os-panel" id="panel-windows" aria-labelledby="tab-windows" hidden>
+      <p class="panel-lead">Windows v0.2.0 zip archives. SHA-256 checksums for the v0.2.0 archives are in <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/checksums.txt">checksums.txt</a>.</p>
+      <div class="arch-picker" role="radiogroup" aria-label="Windows CPU">
+        <label><input type="radio" name="windows-arch" value="amd64"> amd64</label><label><input type="radio" name="windows-arch" value="arm64"> arm64</label>
+        <p class="arch-help">Most Windows PCs are amd64. Windows on ARM is arm64.</p>
+      </div>
+      <div class="arch-block" data-arch="amd64">
+        <h3 class="arch-title">Windows amd64</h3>
+        <ol class="walk">
+          <li>
+            <h4>Download</h4>
+            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_windows_amd64.zip">Download cloudripper_0.2.0_windows_amd64.zip</a></p>
+            <p>In PowerShell, <code>curl.exe</code> is the curl binary:</p>
+            <div class="cmdrow"><code>curl.exe -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_windows_amd64.zip</code><button type="button" class="copy-cmd" aria-label="Copy Windows amd64 download command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Extract</h4>
+            <p>Unzip the archive in PowerShell. It contains <code>cloudripper.exe</code>, <code>LICENSE</code>, <code>README.md</code>, and <code>CHANGELOG.md</code>.</p>
+            <div class="cmdrow"><code>Expand-Archive -Path .\cloudripper_0.2.0_windows_amd64.zip -DestinationPath .</code><button type="button" class="copy-cmd" aria-label="Copy Windows amd64 extract command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Allow the unsigned binary</h4>
+            <p>The release binaries are not code-signed. When SmartScreen appears, choose More info, then Run anyway.</p>
+          </li>
+          <li>
+            <h4>Put it on your PATH</h4>
+            <p>Move <code>cloudripper.exe</code> into a folder that is already on your PATH. Windows runs that file when you type <code>cloudripper</code>.</p>
+          </li>
+          <li>
+            <h4>Run the demo</h4>
+            <p><code>cloudripper demo</code> prints rip, cost, and optimize-style output for a fictional sample embedded in the binary. It does not read credentials and does not make network calls.</p>
+            <div class="cmdrow"><code>cloudripper demo</code><button type="button" class="copy-cmd" aria-label="Copy Windows amd64 demo command">Copy</button></div>
+          </li>
+        </ol>
+      </div>
+<div class="arch-block" data-arch="arm64">
+        <h3 class="arch-title">Windows arm64</h3>
+        <ol class="walk">
+          <li>
+            <h4>Download</h4>
+            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_windows_arm64.zip">Download cloudripper_0.2.0_windows_arm64.zip</a></p>
+            <p>In PowerShell, <code>curl.exe</code> is the curl binary:</p>
+            <div class="cmdrow"><code>curl.exe -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_windows_arm64.zip</code><button type="button" class="copy-cmd" aria-label="Copy Windows arm64 download command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Extract</h4>
+            <p>Unzip the archive in PowerShell. It contains <code>cloudripper.exe</code>, <code>LICENSE</code>, <code>README.md</code>, and <code>CHANGELOG.md</code>.</p>
+            <div class="cmdrow"><code>Expand-Archive -Path .\cloudripper_0.2.0_windows_arm64.zip -DestinationPath .</code><button type="button" class="copy-cmd" aria-label="Copy Windows arm64 extract command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Allow the unsigned binary</h4>
+            <p>The release binaries are not code-signed. When SmartScreen appears, choose More info, then Run anyway.</p>
+          </li>
+          <li>
+            <h4>Put it on your PATH</h4>
+            <p>Move <code>cloudripper.exe</code> into a folder that is already on your PATH. Windows runs that file when you type <code>cloudripper</code>.</p>
+          </li>
+          <li>
+            <h4>Run the demo</h4>
+            <p><code>cloudripper demo</code> prints rip, cost, and optimize-style output for a fictional sample embedded in the binary. It does not read credentials and does not make network calls.</p>
+            <div class="cmdrow"><code>cloudripper demo</code><button type="button" class="copy-cmd" aria-label="Copy Windows arm64 demo command">Copy</button></div>
+          </li>
+        </ol>
+      </div>
+    </div>
+  <div role="tabpanel" class="os-panel" id="panel-macos" aria-labelledby="tab-macos" hidden>
+      <p class="panel-lead">macOS v0.2.0 tar.gz archives. SHA-256 checksums for the v0.2.0 archives are in <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/checksums.txt">checksums.txt</a>.</p>
+      <div class="arch-picker" role="radiogroup" aria-label="macOS CPU">
+        <label><input type="radio" name="macos-arch" value="arm64"> Apple silicon (arm64)</label><label><input type="radio" name="macos-arch" value="amd64"> Intel (amd64)</label>
+        <p class="arch-help">Apple silicon is arm64. Intel Macs are amd64.</p>
+      </div>
+      <div class="arch-block" data-arch="arm64">
+        <h3 class="arch-title">macOS arm64</h3>
+        <ol class="walk">
+          <li>
+            <h4>Download</h4>
+            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_darwin_arm64.tar.gz">Download cloudripper_0.2.0_darwin_arm64.tar.gz</a></p>
+            <div class="cmdrow"><code>curl -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_darwin_arm64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy macOS arm64 download command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Extract</h4>
+            <p>Unpack the archive. It contains <code>cloudripper</code>, <code>LICENSE</code>, <code>README.md</code>, and <code>CHANGELOG.md</code>.</p>
+            <div class="cmdrow"><code>tar xzf cloudripper_0.2.0_darwin_arm64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy macOS arm64 extract command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Allow the unsigned binary</h4>
+            <p>The release binaries are not code-signed. If Gatekeeper blocks the file, open System Settings &gt; Privacy &amp; Security &gt; Open Anyway. Or clear the quarantine flag:</p><div class="cmdrow"><code>xattr -d com.apple.quarantine ./cloudripper</code><button type="button" class="copy-cmd" aria-label="Copy macOS arm64 quarantine command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Put it on your PATH</h4>
+            <p>Move <code>cloudripper</code> into <code>/usr/local/bin</code>.</p>
+            <div class="cmdrow"><code>sudo mv cloudripper /usr/local/bin/</code><button type="button" class="copy-cmd" aria-label="Copy macOS arm64 PATH command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Run the demo</h4>
+            <p><code>cloudripper demo</code> prints rip, cost, and optimize-style output for a fictional sample embedded in the binary. It does not read credentials and does not make network calls.</p>
+            <div class="cmdrow"><code>cloudripper demo</code><button type="button" class="copy-cmd" aria-label="Copy macOS arm64 demo command">Copy</button></div>
+          </li>
+        </ol>
+      </div>
+<div class="arch-block" data-arch="amd64">
+        <h3 class="arch-title">macOS amd64</h3>
+        <ol class="walk">
+          <li>
+            <h4>Download</h4>
+            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_darwin_amd64.tar.gz">Download cloudripper_0.2.0_darwin_amd64.tar.gz</a></p>
+            <div class="cmdrow"><code>curl -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_darwin_amd64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy macOS amd64 download command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Extract</h4>
+            <p>Unpack the archive. It contains <code>cloudripper</code>, <code>LICENSE</code>, <code>README.md</code>, and <code>CHANGELOG.md</code>.</p>
+            <div class="cmdrow"><code>tar xzf cloudripper_0.2.0_darwin_amd64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy macOS amd64 extract command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Allow the unsigned binary</h4>
+            <p>The release binaries are not code-signed. If Gatekeeper blocks the file, open System Settings &gt; Privacy &amp; Security &gt; Open Anyway. Or clear the quarantine flag:</p><div class="cmdrow"><code>xattr -d com.apple.quarantine ./cloudripper</code><button type="button" class="copy-cmd" aria-label="Copy macOS amd64 quarantine command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Put it on your PATH</h4>
+            <p>Move <code>cloudripper</code> into <code>/usr/local/bin</code>.</p>
+            <div class="cmdrow"><code>sudo mv cloudripper /usr/local/bin/</code><button type="button" class="copy-cmd" aria-label="Copy macOS amd64 PATH command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Run the demo</h4>
+            <p><code>cloudripper demo</code> prints rip, cost, and optimize-style output for a fictional sample embedded in the binary. It does not read credentials and does not make network calls.</p>
+            <div class="cmdrow"><code>cloudripper demo</code><button type="button" class="copy-cmd" aria-label="Copy macOS amd64 demo command">Copy</button></div>
+          </li>
+        </ol>
+      </div>
+    </div>
+  <div role="tabpanel" class="os-panel" id="panel-linux" aria-labelledby="tab-linux">
+      <p class="panel-lead">Linux v0.2.0 tar.gz archives. SHA-256 checksums for the v0.2.0 archives are in <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/checksums.txt">checksums.txt</a>.</p>
+      <div class="arch-picker" role="radiogroup" aria-label="Linux CPU">
+        <label><input type="radio" name="linux-arch" value="amd64"> amd64</label><label><input type="radio" name="linux-arch" value="arm64"> arm64</label>
+        <p class="arch-help">amd64 is Intel or AMD. arm64 is ARM.</p>
+      </div>
+      <div class="arch-block" data-arch="amd64">
+        <h3 class="arch-title">Linux amd64</h3>
+        <ol class="walk">
+          <li>
+            <h4>Download</h4>
+            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_linux_amd64.tar.gz">Download cloudripper_0.2.0_linux_amd64.tar.gz</a></p>
+            <div class="cmdrow"><code>curl -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_linux_amd64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy Linux amd64 download command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Extract</h4>
+            <p>Unpack the archive. It contains <code>cloudripper</code>, <code>LICENSE</code>, <code>README.md</code>, and <code>CHANGELOG.md</code>.</p>
+            <div class="cmdrow"><code>tar xzf cloudripper_0.2.0_linux_amd64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy Linux amd64 extract command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Allow the unsigned binary</h4>
+            <p>The release binaries are not code-signed. Mark the file executable:</p><div class="cmdrow"><code>chmod +x ./cloudripper</code><button type="button" class="copy-cmd" aria-label="Copy Linux amd64 executable command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Put it on your PATH</h4>
+            <p>Move <code>cloudripper</code> into <code>/usr/local/bin</code>.</p>
+            <div class="cmdrow"><code>sudo mv cloudripper /usr/local/bin/</code><button type="button" class="copy-cmd" aria-label="Copy Linux amd64 PATH command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Run the demo</h4>
+            <p><code>cloudripper demo</code> prints rip, cost, and optimize-style output for a fictional sample embedded in the binary. It does not read credentials and does not make network calls.</p>
+            <div class="cmdrow"><code>cloudripper demo</code><button type="button" class="copy-cmd" aria-label="Copy Linux amd64 demo command">Copy</button></div>
+          </li>
+        </ol>
+      </div>
+<div class="arch-block" data-arch="arm64">
+        <h3 class="arch-title">Linux arm64</h3>
+        <ol class="walk">
+          <li>
+            <h4>Download</h4>
+            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_linux_arm64.tar.gz">Download cloudripper_0.2.0_linux_arm64.tar.gz</a></p>
+            <div class="cmdrow"><code>curl -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_linux_arm64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy Linux arm64 download command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Extract</h4>
+            <p>Unpack the archive. It contains <code>cloudripper</code>, <code>LICENSE</code>, <code>README.md</code>, and <code>CHANGELOG.md</code>.</p>
+            <div class="cmdrow"><code>tar xzf cloudripper_0.2.0_linux_arm64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy Linux arm64 extract command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Allow the unsigned binary</h4>
+            <p>The release binaries are not code-signed. Mark the file executable:</p><div class="cmdrow"><code>chmod +x ./cloudripper</code><button type="button" class="copy-cmd" aria-label="Copy Linux arm64 executable command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Put it on your PATH</h4>
+            <p>Move <code>cloudripper</code> into <code>/usr/local/bin</code>.</p>
+            <div class="cmdrow"><code>sudo mv cloudripper /usr/local/bin/</code><button type="button" class="copy-cmd" aria-label="Copy Linux arm64 PATH command">Copy</button></div>
+          </li>
+          <li>
+            <h4>Run the demo</h4>
+            <p><code>cloudripper demo</code> prints rip, cost, and optimize-style output for a fictional sample embedded in the binary. It does not read credentials and does not make network calls.</p>
+            <div class="cmdrow"><code>cloudripper demo</code><button type="button" class="copy-cmd" aria-label="Copy Linux arm64 demo command">Copy</button></div>
+          </li>
+        </ol>
+      </div>
+    </div>
+  <p class="desktop-soon">A desktop app is coming soon.</p>
+  <h3 id="demo-term-title">What <code>cloudripper demo</code> prints</h3>
+  <p class="sub">Fictional demo sample, captured from <code>cloudripper demo</code>. These resources, costs, and savings figures are made up. No credentials were used and no network calls were made.</p>
+  <div class="term" aria-labelledby="demo-term-title">
+    <div class="term-bar">
+      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>cloudripper demo — fictional sample</span>
+      <button type="button" class="term-replay" id="demo-replay">Replay</button>
+    </div>
+    <pre class="term-frame" id="demo-frame"><span class="prompt">$ cloudripper demo</span>
+<span data-demo-transcript>FICTIONAL SAMPLE DATA. These resources, costs, and savings figures are made up. They are not your cloud spend and not real savings. No credentials were used and no network calls were made.
+
+Inventory (rip-style) and spend (cost-style) on the fictional sample:
+Estimated resource total: $617.00 (5 unpriced excluded; coverage incomplete)
+Actual spend (trailing window): $337.55
+  cost-explorer: $186.40 across 2 services
+  bigquery: $48.15 across 2 services
+  azure-cost: $91.00 across 2 services
+  billing-history: $12.00 across 1 service (account invoice/billing-history by occurred_at; not per-resource)
+Note: 5 resource row(s) remain unpriced; estimate total covers only priced inventory
+Found 16 fictional resources:
+
+PROVIDER    TYPE       ID                                                                                                                                 NAME                  REGION       STATUS      SPEC             USD     SOURCE
+aws         ec2        i-sample-web                                                                                                                       sample-web            us-east-1    running     t3.xlarge        120.00  estimate
+aws         ec2        i-sample-batch                                                                                                                     sample-batch          us-east-1    running     t3.micro         8.00    estimate
+aws         ec2        i-sample-stopped                                                                                                                   sample-stopped        us-east-1    stopped     t3.small         6.00    estimate
+aws         ebs        vol-sample-orphan                                                                                                                  sample-orphan-volume  us-east-1    available   gp3              5.00    estimate
+aws         eip        eipalloc-sample                                                                                                                    sample-unused-eip     us-east-1    unattached  ipv4             3.50    estimate
+aws         elb        arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/sample-idle/000                                               sample-idle-lb        us-east-1    idle        application      18.00   estimate
+aws         ec2        i-sample-protected                                                                                                                 sample-protected      us-east-1    running     m5.xlarge        200.00  estimate
+gcp         gce        sample-gce                                                                                                                         sample-gce            us-central1  running     e2-standard-4    110.00  estimate
+gcp         gcp-disk   sample-disk                                                                                                                        sample-orphan-disk    us-central1  unattached  pd-balanced      4.00    estimate
+azure       azure-vm   /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/sample/providers/Microsoft.Compute/virtualMachines/sample-vm    sample-vm             eastus       running     Standard_D4s_v3  140.00  estimate
+azure       azure-ip   /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/sample/providers/Microsoft.Network/publicIPAddresses/sample-ip  sample-unused-ip      eastus       unattached  ipv4             2.50    estimate
+cloudflare  cf-worker  sample-worker                                                                                                                      sample-worker         account      active      standard         n/a     unpriced
+cloudflare  cf-r2      sample-bucket                                                                                                                      sample-bucket         default      listed      Standard         n/a     unpriced
+cloudflare  cf-kv      sample-kv                                                                                                                          sample-kv             account      listed                       n/a     unpriced
+cloudflare  cf-d1      sample-db                                                                                                                          sample-db             account      listed                       n/a     unpriced
+cloudflare  cf-pages   sample-pages                                                                                                                       sample-pages          account      listed      main             n/a     unpriced
+
+Recommendations (optimize-style) on the fictional sample:
+Potential savings are the optimizer's heuristic on this fictional inventory. They are not real savings, and the demo does not change any cloud resource.
+Monthly spend: $617.00
+Potential savings: $172.50 (28%)
+
+Recommendations:
+1. [rightsize] azure/sample-vm (/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/sample/providers/Microsoft.Compute/virtualMachines/sample-vm) — save $49.00/mo
+   → high-cost instance — consider downsizing or reserved pricing (proposed: Standard_D2s_v3)
+2. [rightsize] aws/sample-web (i-sample-web) — save $42.00/mo
+   → high-cost instance — consider downsizing or reserved pricing (proposed: t3.large)
+3. [rightsize] gcp/sample-gce (sample-gce) — save $38.50/mo
+   → high-cost instance — consider downsizing or reserved pricing (proposed: e2-standard-2)
+4. [terminate] aws/sample-idle-lb (arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/sample-idle/000) — save $18.00/mo
+   → load balancer has no registered backends
+5. [terminate] aws/sample-stopped (i-sample-stopped) — save $6.00/mo
+   → stopped instance still incurring attached storage costs
+6. [terminate] aws/sample-orphan-volume (vol-sample-orphan) — save $5.00/mo
+   → unattached disk is still billed
+7. [schedule] aws/sample-batch (i-sample-batch) — save $4.00/mo
+   → unmanaged instance — schedule off-hours shutdown (proposed: off=utc:19-07)
+8. [terminate] gcp/sample-orphan-disk (sample-disk) — save $4.00/mo
+   → unattached disk is still billed
+9. [terminate] aws/sample-unused-eip (eipalloc-sample) — save $3.50/mo
+   → unattached public IP is billed while idle
+10. [terminate] azure/sample-unused-ip (/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/sample/providers/Microsoft.Network/publicIPAddresses/sample-ip) — save $2.50/mo
+   → unattached public IP is billed while idle
+Recommendations only. The demo does not apply changes.</span></pre>
+    <pre class="term-live" id="demo-live" aria-hidden="true"></pre>
+  </div>
+</div></section>
 
 <section id="demo"><div class="wrap">
   <h2>See it run</h2>
@@ -154,7 +489,7 @@ footer a{margin-right:16px}
   <h2>How it works</h2>
   <p class="sub">Three steps. Scanning only needs read-only access.</p>
   <ol class="steps">
-    <li><h3>Install</h3><p>Download a prebuilt binary for Linux, macOS, or Windows from <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest">GitHub Releases</a>, or run one <code>go install</code> command.</p></li>
+    <li><h3>Install</h3><p>Download a prebuilt binary for Linux, macOS, or Windows from the <a href="#download">download steps</a>, or run one <code>go install</code> command.</p></li>
     <li><h3>Connect read-only</h3><p>Scans need only read-only access. <code>optimize</code>, <code>schedule</code>, and <code>scale</code> change AWS, GCP, or Azure resources only when you pass <code>--apply</code>. <code>--dry-run</code> still wins if both are set. A live change asks for confirmation on a terminal, or <code>--yes</code> when stdin is not a terminal. Cloudflare mutations are refused.</p></li>
     <li><h3>Scan &amp; act</h3><p>You get inventory, spend (an actual total when a billing API responds, otherwise an estimate), and forgotten-bill matches. Chaos posts only when <code>CHAOS_ENDPOINT</code> is set. Slack or email alerts are sent only if you configure them.</p></li>
   </ol>
@@ -174,7 +509,7 @@ $ cloudripper --help          # see cost and chaos-test commands</code></pre>
       <h3>Free</h3><div class="amt">$0<small> forever</small></div>
       <p>The full open-source CLI.</p>
       <ul><li>AWS, GCP, Azure, and Cloudflare scanning</li><li>Spend reports (actuals when billing APIs respond, estimates otherwise)</li><li>find-bills</li><li>Safe chaos tests</li><li>MIT license</li></ul>
-      <a class="btn" href="https://github.com/AndrewGrayYouNeeK/Cloudripper">Get the CLI</a>
+      <a class="btn" href="#download">Get the CLI</a>
     </div>
     <div class="card price hl">
       <span class="tag">Coming soon</span>
@@ -264,5 +599,213 @@ $ cloudripper --help          # see cost and chaos-test commands</code></pre>
   });
 })();
 </script>
+<script>
+(function(){
+  var userPicked=false;
+  var tabs=Array.prototype.slice.call(document.querySelectorAll('#download [role="tab"]'));
+  function selectTab(tab, focus){
+    tabs.forEach(function(t){
+      var on=t===tab;
+      t.setAttribute('aria-selected', on?'true':'false');
+      t.tabIndex=on?0:-1;
+      var panel=document.getElementById(t.getAttribute('aria-controls'));
+      if(panel) panel.hidden=!on;
+    });
+    if(focus) tab.focus();
+  }
+  tabs.forEach(function(tab, i){
+    tab.addEventListener('click', function(){ userPicked=true; selectTab(tab, true); });
+    tab.addEventListener('keydown', function(e){
+      var next=null;
+      if(e.key==='ArrowRight'||e.key==='ArrowDown') next=tabs[(i+1)%tabs.length];
+      else if(e.key==='ArrowLeft'||e.key==='ArrowUp') next=tabs[(i-1+tabs.length)%tabs.length];
+      else if(e.key==='Home') next=tabs[0];
+      else if(e.key==='End') next=tabs[tabs.length-1];
+      else return;
+      e.preventDefault();
+      userPicked=true;
+      selectTab(next, true);
+    });
+  });
+  function mark(el){
+    if(el.querySelector('.match-pill')) return;
+    var pill=document.createElement('span');
+    pill.className='match-pill';
+    pill.textContent='This computer';
+    el.appendChild(pill);
+  }
+  document.querySelectorAll('#download .os-panel').forEach(function(panel){
+    var picker=panel.querySelector('.arch-picker');
+    var blocks=panel.querySelectorAll('.arch-block');
+    panel._showArch=function(value){
+      panel.classList.remove('show-all');
+      blocks.forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-arch')===value); });
+    };
+    picker.addEventListener('change', function(e){
+      if(e.target&&e.target.value) panel._showArch(e.target.value);
+    });
+  });
+  function applyArch(os, arch){
+    var panel=document.getElementById('panel-'+os);
+    if(!panel) return;
+    if(!arch){ panel.classList.add('show-all'); return; }
+    var input=panel.querySelector('.arch-picker input[value="'+arch+'"]');
+    if(!input){ panel.classList.add('show-all'); return; }
+    input.checked=true;
+    panel._showArch(arch);
+    mark(input.parentNode);
+  }
+  function detectFromUA(ua){
+    var os=null, arch=null;
+    var handheld=/iPhone|iPod|iPad|Windows Phone/i.test(ua) || (/Android/i.test(ua) && /Mobile/i.test(ua));
+    if(!handheld){
+      if(/Windows/i.test(ua)) os='windows';
+      else if(/Mac OS X|Macintosh/i.test(ua)) os='macos';
+      else if(/Linux/i.test(ua) && !/Android/i.test(ua)) os='linux';
+    }
+    if(/aarch64|arm64|ARM64/i.test(ua)) arch='arm64';
+    else if(/x86_64|Win64|WOW64|amd64|\bx64\b/i.test(ua)) arch='amd64';
+    return {os:os, arch:arch};
+  }
+  var ua=navigator.userAgent||'';
+  var phone=/iPhone|iPod|iPad|Windows Phone/i.test(ua) || (/Android/i.test(ua) && /Mobile/i.test(ua));
+  if(navigator.userAgentData && navigator.userAgentData.mobile) phone=true;
+  if(phone) document.body.classList.add('is-phone');
+  function selectDefault(panel){
+    var id=panel.id.replace('panel-','');
+    var value={windows:'amd64', macos:'arm64', linux:'amd64'}[id];
+    var input=panel.querySelector('.arch-picker input[value="'+value+'"]');
+    if(!input){ panel.classList.add('show-all'); return; }
+    input.checked=true;
+    panel._showArch(value);
+  }
+  function finish(detected){
+    document.documentElement.classList.add('js');
+    var guess=detectFromUA(ua);
+    var os=(detected&&detected.os)||guess.os;
+    var arch=(detected&&detected.arch)||guess.arch;
+    if(detected&&detected.desktop===false){ os=null; arch=null; }
+    document.querySelectorAll('#download .os-panel').forEach(selectDefault);
+    if(!os) return;
+    var tab=document.getElementById('tab-'+os);
+    if(tab){
+      if(!userPicked) selectTab(tab, false);
+      mark(tab);
+    }
+    if(arch) applyArch(os, arch);
+    else {
+      var panel=document.getElementById('panel-'+os);
+      if(panel){
+        panel.classList.add('show-all');
+        panel.querySelectorAll('input[type=radio]').forEach(function(input){ input.checked=false; });
+      }
+    }
+  }
+  var uad=navigator.userAgentData;
+  if(!uad){
+    finish(null);
+  }else{
+    var platform=uad.platform||'';
+    var pending={os:null, arch:null, desktop:true};
+    if(/Windows/i.test(platform)) pending.os='windows';
+    else if(/macOS|Mac/i.test(platform)) pending.os='macos';
+    else if(/Linux/i.test(platform)) pending.os='linux';
+    else if(/Android|Chrome OS|iOS|iPhone/i.test(platform)) pending.desktop=false;
+    var high=uad.getHighEntropyValues?uad.getHighEntropyValues(['architecture','bitness','platform']):Promise.resolve({});
+    high.then(function(hi){
+      hi=hi||{};
+      var p=hi.platform||platform;
+      if(/Windows/i.test(p)) pending.os='windows';
+      else if(/macOS|Mac/i.test(p)) pending.os='macos';
+      else if(/Linux/i.test(p)) pending.os='linux';
+      else if(/Android|Chrome OS|iOS|iPhone/i.test(p)){ pending.os=null; pending.desktop=false; }
+      var a=String(hi.architecture||'').toLowerCase();
+      if(a==='arm') pending.arch='arm64';
+      else if(a==='x86' && hi.bitness!=='32') pending.arch='amd64';
+      finish(pending);
+    }).catch(function(){ finish(pending); });
+  }
+  function copyText(text){
+    if(navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+    return new Promise(function(resolve, reject){
+      var ta=document.createElement('textarea');
+      ta.value=text; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.left='-9999px';
+      document.body.appendChild(ta); ta.select();
+      var ok=false; try{ ok=document.execCommand('copy'); }catch(err){ ok=false; }
+      ta.remove();
+      if(ok) resolve(); else reject();
+    });
+  }
+  document.addEventListener('click', function(e){
+    var btn=e.target.closest&&e.target.closest('.copy-cmd');
+    if(!btn) return;
+    var code=btn.parentNode.querySelector('code');
+    if(!code) return;
+    copyText(code.textContent).then(function(){ btn.textContent='Copied!'; }, function(){ btn.textContent='Press Ctrl+C'; });
+    setTimeout(function(){ btn.textContent='Copy'; }, 2000);
+  });
+  var copyLink=document.getElementById('copy-link');
+  if(copyLink){
+    copyLink.addEventListener('click', function(){
+      var url=new URL(location.href); url.hash='download';
+      copyText(url.toString()).then(function(){ copyLink.textContent='Copied!'; }, function(){ copyLink.textContent='Press Ctrl+C'; });
+      setTimeout(function(){ copyLink.textContent='Copy link'; }, 2000);
+    });
+  }
+  var share=document.getElementById('share-link');
+  if(share && navigator.share){
+    share.hidden=false;
+    share.addEventListener('click', function(){
+      var url=new URL(location.href); url.hash='download';
+      navigator.share({title:'YouNeeK CloudRipper', text:'Download the CloudRipper CLI', url:url.toString()}).catch(function(){});
+    });
+  }
+  var frame=document.getElementById('demo-frame');
+  var live=document.getElementById('demo-live');
+  var replay=document.getElementById('demo-replay');
+  var transcript=document.querySelector('[data-demo-transcript]');
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(replay && reduce) replay.hidden=true;
+  var generation=0;
+  function play(){
+    if(reduce||!live||!transcript||!frame) return;
+    var gen=++generation;
+    var lines=transcript.textContent.replace(/^\n/,'').replace(/\n$/,'').split('\n');
+    frame.closest('.term').classList.add('js-play');
+    live.textContent='';
+    var caret=document.createElement('span');
+    caret.className='caret';
+    caret.setAttribute('aria-hidden','true');
+    live.appendChild(caret);
+    var command='$ cloudripper demo';
+    var ci=0;
+    function typeCmd(){
+      if(gen!==generation) return;
+      if(ci<command.length){
+        caret.insertAdjacentText('beforebegin', command.charAt(ci));
+        ci++;
+        live.scrollTop=live.scrollHeight;
+        setTimeout(typeCmd, 16);
+        return;
+      }
+      caret.insertAdjacentText('beforebegin', '\n');
+      var li=0;
+      function typeLine(){
+        if(gen!==generation) return;
+        if(li>=lines.length){ caret.remove(); live.scrollTop=0; return; }
+        caret.insertAdjacentText('beforebegin', (li?'\n':'')+lines[li]);
+        li++;
+        live.scrollTop=live.scrollHeight;
+        setTimeout(typeLine, 48);
+      }
+      setTimeout(typeLine, 180);
+    }
+    typeCmd();
+  }
+  if(!reduce) play();
+  if(replay) replay.addEventListener('click', function(){ play(); });
+})();
+</script>
+
 </body>
 </html>

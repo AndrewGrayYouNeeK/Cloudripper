@@ -1,0 +1,57 @@
+FICTIONAL SAMPLE DATA. These resources, costs, and savings figures are made up. They are not your cloud spend and not real savings. No credentials were used and no network calls were made.
+
+Inventory (rip-style) and spend (cost-style) on the fictional sample:
+Estimated resource total: $617.00 (5 unpriced excluded; coverage incomplete)
+Actual spend (trailing window): $337.55
+  cost-explorer: $186.40 across 2 services
+  bigquery: $48.15 across 2 services
+  azure-cost: $91.00 across 2 services
+  billing-history: $12.00 across 1 service (account invoice/billing-history by occurred_at; not per-resource)
+Note: 5 resource row(s) remain unpriced; estimate total covers only priced inventory
+Found 16 fictional resources:
+
+PROVIDER    TYPE       ID                                                                                                                                 NAME                  REGION       STATUS      SPEC             USD     SOURCE
+aws         ec2        i-sample-web                                                                                                                       sample-web            us-east-1    running     t3.xlarge        120.00  estimate
+aws         ec2        i-sample-batch                                                                                                                     sample-batch          us-east-1    running     t3.micro         8.00    estimate
+aws         ec2        i-sample-stopped                                                                                                                   sample-stopped        us-east-1    stopped     t3.small         6.00    estimate
+aws         ebs        vol-sample-orphan                                                                                                                  sample-orphan-volume  us-east-1    available   gp3              5.00    estimate
+aws         eip        eipalloc-sample                                                                                                                    sample-unused-eip     us-east-1    unattached  ipv4             3.50    estimate
+aws         elb        arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/sample-idle/000                                               sample-idle-lb        us-east-1    idle        application      18.00   estimate
+aws         ec2        i-sample-protected                                                                                                                 sample-protected      us-east-1    running     m5.xlarge        200.00  estimate
+gcp         gce        sample-gce                                                                                                                         sample-gce            us-central1  running     e2-standard-4    110.00  estimate
+gcp         gcp-disk   sample-disk                                                                                                                        sample-orphan-disk    us-central1  unattached  pd-balanced      4.00    estimate
+azure       azure-vm   /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/sample/providers/Microsoft.Compute/virtualMachines/sample-vm    sample-vm             eastus       running     Standard_D4s_v3  140.00  estimate
+azure       azure-ip   /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/sample/providers/Microsoft.Network/publicIPAddresses/sample-ip  sample-unused-ip      eastus       unattached  ipv4             2.50    estimate
+cloudflare  cf-worker  sample-worker                                                                                                                      sample-worker         account      active      standard         n/a     unpriced
+cloudflare  cf-r2      sample-bucket                                                                                                                      sample-bucket         default      listed      Standard         n/a     unpriced
+cloudflare  cf-kv      sample-kv                                                                                                                          sample-kv             account      listed                       n/a     unpriced
+cloudflare  cf-d1      sample-db                                                                                                                          sample-db             account      listed                       n/a     unpriced
+cloudflare  cf-pages   sample-pages                                                                                                                       sample-pages          account      listed      main             n/a     unpriced
+
+Recommendations (optimize-style) on the fictional sample:
+Potential savings are the optimizer's heuristic on this fictional inventory. They are not real savings, and the demo does not change any cloud resource.
+Monthly spend: $617.00
+Potential savings: $172.50 (28%)
+
+Recommendations:
+1. [rightsize] azure/sample-vm (/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/sample/providers/Microsoft.Compute/virtualMachines/sample-vm) — save $49.00/mo
+   → high-cost instance — consider downsizing or reserved pricing (proposed: Standard_D2s_v3)
+2. [rightsize] aws/sample-web (i-sample-web) — save $42.00/mo
+   → high-cost instance — consider downsizing or reserved pricing (proposed: t3.large)
+3. [rightsize] gcp/sample-gce (sample-gce) — save $38.50/mo
+   → high-cost instance — consider downsizing or reserved pricing (proposed: e2-standard-2)
+4. [terminate] aws/sample-idle-lb (arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/sample-idle/000) — save $18.00/mo
+   → load balancer has no registered backends
+5. [terminate] aws/sample-stopped (i-sample-stopped) — save $6.00/mo
+   → stopped instance still incurring attached storage costs
+6. [terminate] aws/sample-orphan-volume (vol-sample-orphan) — save $5.00/mo
+   → unattached disk is still billed
+7. [schedule] aws/sample-batch (i-sample-batch) — save $4.00/mo
+   → unmanaged instance — schedule off-hours shutdown (proposed: off=utc:19-07)
+8. [terminate] gcp/sample-orphan-disk (sample-disk) — save $4.00/mo
+   → unattached disk is still billed
+9. [terminate] aws/sample-unused-eip (eipalloc-sample) — save $3.50/mo
+   → unattached public IP is billed while idle
+10. [terminate] azure/sample-unused-ip (/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/sample/providers/Microsoft.Network/publicIPAddresses/sample-ip) — save $2.50/mo
+   → unattached public IP is billed while idle
+Recommendations only. The demo does not apply changes.
