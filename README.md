@@ -471,7 +471,7 @@ What this version does:
 
 Cloud inventory and spend stay on this machine. The app calls the cloud providers' own APIs when you run a live scan or watch sample. It calls Slack or SMTP only if you start watch and those variables are set. There is no hosted CloudRipper backend.
 
-Builds from CI are unsigned. macOS Gatekeeper and Windows SmartScreen will warn when you open them. Linux packages are unsigned as well. Review the workflow artifacts before you run them.
+macOS artifacts from pushes to `main` and from version tags (`v*`) are signed with a Developer ID Application certificate and notarized by Apple. Gatekeeper accepts the stapled zip, `cloudripper-desktop-macos.zip`, in the macOS workflow artifact. Pull request artifacts stay ad-hoc signed, so Gatekeeper warns if you open them. Windows installers are unsigned, and SmartScreen warns when you open them. Linux packages are unsigned as well. Review the workflow artifacts before you run them.
 
 ### Build locally
 
@@ -492,7 +492,7 @@ cd desktop
 wails3 task build
 ```
 
-The binary is `desktop/bin/cloudripper-desktop`. Package an unsigned AppImage, deb, and rpm with `wails3 task linux:package`. On macOS, `wails3 task darwin:package:universal` builds a universal app and `wails3 task darwin:create:dmg` builds a DMG. On Windows, `wails3 task windows:package` builds an NSIS installer (NSIS must be installed).
+The binary is `desktop/bin/cloudripper-desktop`. Package an unsigned AppImage, deb, and rpm with `wails3 task linux:package`. On macOS, `wails3 task darwin:package:universal` builds a universal app and `wails3 task darwin:create:dmg` builds a DMG. A local macOS package is ad-hoc signed. GitHub Actions applies the Developer ID signature, notarizes the `.app`, staples the ticket, and re-zips it for pushes to `main` and for version tags. On Windows, `wails3 task windows:package` builds an NSIS installer (NSIS must be installed). Windows and Linux packages from that workflow stay unsigned.
 
 `go build ./...` and `go test ./...` skip `desktop/` unless you pass `-tags desktop`, so the pure-Go CLI build does not need WebKit or CGO. When you tidy modules, use `GOFLAGS=-tags=desktop go mod tidy` so the Wails requirement stays in `go.mod`.
 
