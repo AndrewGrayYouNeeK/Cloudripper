@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The marketing site download walkthrough points at the pinned v0.3.0 CLI archives and desktop packages.
+
 ## [0.3.0] - 2026-11-21
 
 - A read-only desktop app lives in `desktop/` and is built with Wails v3.1.0. It opens on the embedded fictional sample, shows local AWS, GCP, Azure, and Cloudflare credential status without displaying secrets, and shows rip, cost, optimizer recommendations, and find-bills. It exports HTML, CSV, and JSON and can raise watch alerts through Slack, email, and an operating-system notification. It does not apply changes, scale, run schedules, or start chaos experiments.
