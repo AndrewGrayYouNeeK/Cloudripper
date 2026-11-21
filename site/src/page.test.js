@@ -34,22 +34,33 @@ test("landing copy matches the CLI", () => {
   }
 });
 
-test("download walkthrough uses the v0.2.0 release and the demo command", () => {
+test("download walkthrough uses the v0.3.0 release and the demo command", () => {
+  const base = "https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0";
   const files = [
-    "cloudripper_0.2.0_darwin_amd64.tar.gz",
-    "cloudripper_0.2.0_darwin_arm64.tar.gz",
-    "cloudripper_0.2.0_linux_amd64.tar.gz",
-    "cloudripper_0.2.0_linux_arm64.tar.gz",
-    "cloudripper_0.2.0_windows_amd64.zip",
-    "cloudripper_0.2.0_windows_arm64.zip",
+    "cloudripper_0.3.0_darwin_amd64.tar.gz",
+    "cloudripper_0.3.0_darwin_arm64.tar.gz",
+    "cloudripper_0.3.0_linux_amd64.tar.gz",
+    "cloudripper_0.3.0_linux_arm64.tar.gz",
+    "cloudripper_0.3.0_windows_amd64.zip",
+    "cloudripper_0.3.0_windows_arm64.zip",
     "checksums.txt",
+    "cloudripper-desktop-macos.dmg",
+    "cloudripper-desktop-macos.zip",
+    "cloudripper-desktop-amd64-installer.exe",
+    "cloudripper-desktop-arm64-installer.exe",
+    "cloudripper-desktop-x86_64.AppImage",
+    "cloudripper-desktop-aarch64.AppImage",
+    "cloudripper-desktop_0.3.0_amd64.deb",
+    "cloudripper-desktop_0.3.0_arm64.deb",
+    "cloudripper-desktop-0.3.0-1.x86_64.rpm",
+    "cloudripper-desktop-0.3.0-1.aarch64.rpm",
+    "desktop-checksums.txt",
   ];
   for (const file of files) {
-    assert.ok(
-      html.includes(`https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/${file}`),
-      `missing ${file}`,
-    );
+    assert.ok(html.includes(`${base}/${file}`), `missing ${file}`);
   }
+  assert.equal(html.includes("/releases/latest/download/"), false);
+  assert.equal(html.includes("A desktop app is coming soon."), false);
   assert.equal((html.match(/<button type="button" role="tab"/g) || []).length, 3);
   assert.equal((html.match(/role="tabpanel"/g) || []).length, 3);
   assert.ok(html.includes('role="tablist"'));
@@ -60,9 +71,12 @@ test("download walkthrough uses the v0.2.0 release and the demo command", () => 
   assert.ok(html.includes("More info, then Run anyway"));
   assert.ok(html.includes("System Settings &gt; Privacy &amp; Security &gt; Open Anyway"));
   assert.ok(html.includes("sudo mv cloudripper /usr/local/bin/"));
-  assert.ok(html.includes("Expand-Archive -Path .\\cloudripper_0.2.0_windows_amd64.zip -DestinationPath ."));
+  assert.ok(html.includes("Expand-Archive -Path .\\cloudripper_0.3.0_windows_amd64.zip -DestinationPath ."));
   assert.ok(html.includes("cloudripper demo"));
-  assert.ok(html.includes("A desktop app is coming soon."));
+  assert.ok(html.includes("signed with a Developer ID Application certificate and notarized"));
+  assert.ok(html.includes("The installers are unsigned."));
+  assert.ok(html.includes("These packages are unsigned."));
+  assert.ok(html.includes('id="desktop-app"'));
   assert.ok(html.includes("CloudRipper is a command-line tool for computers."));
   assert.ok(html.includes('id="copy-link"'));
   assert.ok(html.includes('id="share-link"'));
@@ -78,7 +92,7 @@ test("download walkthrough uses the v0.2.0 release and the demo command", () => 
 
   const windows = html.slice(html.indexOf('id="panel-windows"'), html.indexOf('id="panel-macos"'));
   const macos = html.slice(html.indexOf('id="panel-macos"'), html.indexOf('id="panel-linux"'));
-  const linux = html.slice(html.indexOf('id="panel-linux"'), html.indexOf('class="desktop-soon"'));
+  const linux = html.slice(html.indexOf('id="panel-linux"'), html.indexOf('id="desktop-app"'));
   assert.equal(windows.includes("sudo mv"), false);
   assert.equal(windows.includes("chmod +x"), false);
   assert.ok(windows.includes("curl.exe -LO"));

@@ -115,8 +115,14 @@ footer a{margin-right:16px}
 .phone-note .row{justify-content:center}
 body.is-phone .phone-note{display:block}
 @media (max-width:720px){.phone-note{display:block}}
-.panel-lead,.desktop-soon{color:var(--mute);text-align:center;max-width:680px;margin:0 auto 16px}
-.desktop-soon{margin-top:28px;color:var(--text);font-weight:600}
+.panel-lead{color:var(--mute);text-align:center;max-width:680px;margin:0 auto 16px}
+.desktop-app{max-width:760px;margin:28px auto 0}
+.desktop-app h3{margin:0 0 8px;text-align:center;font-size:1.2rem}
+.desktop-app > .panel-lead{margin-bottom:18px}
+.desktop-app .card p{margin:0 0 12px}
+.desktop-app .row{justify-content:center}
+.desktop-app .btn{text-align:center}
+.desktop-app .arch-label{margin:14px 0 8px;font-weight:700;color:var(--text)}
 .arch-picker{display:none;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin:0 auto 8px;max-width:760px}
 .js .arch-picker{display:flex}
 .arch-picker label{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:#ffffff08}
@@ -189,7 +195,7 @@ body.is-phone .phone-note{display:block}
 
 <section id="download"><div class="wrap">
   <h2>Download</h2>
-  <p class="sub">Prebuilt v0.2.0 binaries for Windows, macOS, and Linux. No Go required. The files are the <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/tag/v0.2.0">v0.2.0 release</a>. The binaries are not code-signed. If you have Go 1.26.10 or newer, the <code>go install</code> command at the top of the page works too.</p>
+  <p class="sub">Prebuilt v0.3.0 CLI binaries and a desktop app for Windows, macOS, and Linux. No Go required. The files are the <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/tag/v0.3.0">v0.3.0 release</a>. The CLI binaries are not code-signed. If you have Go 1.26.10 or newer, the <code>go install</code> command at the top of the page works too.</p>
   <div class="phone-note" id="phone-note">
     <p><strong>CloudRipper is a command-line tool for computers.</strong> Copy this page or share it, then open it on a computer to download and run the CLI.</p>
     <div class="row">
@@ -203,7 +209,7 @@ body.is-phone .phone-note{display:block}
     <button type="button" role="tab" id="tab-linux" aria-controls="panel-linux" aria-selected="true" tabindex="0">Linux</button>
   </div>
   <div role="tabpanel" class="os-panel" id="panel-windows" aria-labelledby="tab-windows" hidden>
-      <p class="panel-lead">Windows v0.2.0 zip archives. SHA-256 checksums for the v0.2.0 archives are in <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/checksums.txt">checksums.txt</a>.</p>
+      <p class="panel-lead">Windows v0.3.0 zip archives. SHA-256 checksums for the v0.3.0 CLI archives are in <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/checksums.txt">checksums.txt</a>.</p>
       <div class="arch-picker" role="radiogroup" aria-label="Windows CPU">
         <label><input type="radio" name="windows-arch" value="amd64"> amd64</label><label><input type="radio" name="windows-arch" value="arm64"> arm64</label>
         <p class="arch-help">Most Windows PCs are amd64. Windows on ARM is arm64.</p>
@@ -213,14 +219,14 @@ body.is-phone .phone-note{display:block}
         <ol class="walk">
           <li>
             <h4>Download</h4>
-            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_windows_amd64.zip">Download cloudripper_0.2.0_windows_amd64.zip</a></p>
+            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper_0.3.0_windows_amd64.zip">Download cloudripper_0.3.0_windows_amd64.zip</a></p>
             <p>In PowerShell, <code>curl.exe</code> is the curl binary:</p>
-            <div class="cmdrow"><code>curl.exe -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_windows_amd64.zip</code><button type="button" class="copy-cmd" aria-label="Copy Windows amd64 download command">Copy</button></div>
+            <div class="cmdrow"><code>curl.exe -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper_0.3.0_windows_amd64.zip</code><button type="button" class="copy-cmd" aria-label="Copy Windows amd64 download command">Copy</button></div>
           </li>
           <li>
             <h4>Extract</h4>
             <p>Unzip the archive in PowerShell. It contains <code>cloudripper.exe</code>, <code>LICENSE</code>, <code>README.md</code>, and <code>CHANGELOG.md</code>.</p>
-            <div class="cmdrow"><code>Expand-Archive -Path .\cloudripper_0.2.0_windows_amd64.zip -DestinationPath .</code><button type="button" class="copy-cmd" aria-label="Copy Windows amd64 extract command">Copy</button></div>
+            <div class="cmdrow"><code>Expand-Archive -Path .\cloudripper_0.3.0_windows_amd64.zip -DestinationPath .</code><button type="button" class="copy-cmd" aria-label="Copy Windows amd64 extract command">Copy</button></div>
           </li>
           <li>
             <h4>Allow the unsigned binary</h4>
@@ -242,14 +248,14 @@ body.is-phone .phone-note{display:block}
         <ol class="walk">
           <li>
             <h4>Download</h4>
-            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_windows_arm64.zip">Download cloudripper_0.2.0_windows_arm64.zip</a></p>
+            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper_0.3.0_windows_arm64.zip">Download cloudripper_0.3.0_windows_arm64.zip</a></p>
             <p>In PowerShell, <code>curl.exe</code> is the curl binary:</p>
-            <div class="cmdrow"><code>curl.exe -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_windows_arm64.zip</code><button type="button" class="copy-cmd" aria-label="Copy Windows arm64 download command">Copy</button></div>
+            <div class="cmdrow"><code>curl.exe -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper_0.3.0_windows_arm64.zip</code><button type="button" class="copy-cmd" aria-label="Copy Windows arm64 download command">Copy</button></div>
           </li>
           <li>
             <h4>Extract</h4>
             <p>Unzip the archive in PowerShell. It contains <code>cloudripper.exe</code>, <code>LICENSE</code>, <code>README.md</code>, and <code>CHANGELOG.md</code>.</p>
-            <div class="cmdrow"><code>Expand-Archive -Path .\cloudripper_0.2.0_windows_arm64.zip -DestinationPath .</code><button type="button" class="copy-cmd" aria-label="Copy Windows arm64 extract command">Copy</button></div>
+            <div class="cmdrow"><code>Expand-Archive -Path .\cloudripper_0.3.0_windows_arm64.zip -DestinationPath .</code><button type="button" class="copy-cmd" aria-label="Copy Windows arm64 extract command">Copy</button></div>
           </li>
           <li>
             <h4>Allow the unsigned binary</h4>
@@ -268,7 +274,7 @@ body.is-phone .phone-note{display:block}
       </div>
     </div>
   <div role="tabpanel" class="os-panel" id="panel-macos" aria-labelledby="tab-macos" hidden>
-      <p class="panel-lead">macOS v0.2.0 tar.gz archives. SHA-256 checksums for the v0.2.0 archives are in <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/checksums.txt">checksums.txt</a>.</p>
+      <p class="panel-lead">macOS v0.3.0 tar.gz archives. SHA-256 checksums for the v0.3.0 CLI archives are in <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/checksums.txt">checksums.txt</a>.</p>
       <div class="arch-picker" role="radiogroup" aria-label="macOS CPU">
         <label><input type="radio" name="macos-arch" value="arm64"> Apple silicon (arm64)</label><label><input type="radio" name="macos-arch" value="amd64"> Intel (amd64)</label>
         <p class="arch-help">Apple silicon is arm64. Intel Macs are amd64.</p>
@@ -278,13 +284,13 @@ body.is-phone .phone-note{display:block}
         <ol class="walk">
           <li>
             <h4>Download</h4>
-            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_darwin_arm64.tar.gz">Download cloudripper_0.2.0_darwin_arm64.tar.gz</a></p>
-            <div class="cmdrow"><code>curl -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_darwin_arm64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy macOS arm64 download command">Copy</button></div>
+            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper_0.3.0_darwin_arm64.tar.gz">Download cloudripper_0.3.0_darwin_arm64.tar.gz</a></p>
+            <div class="cmdrow"><code>curl -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper_0.3.0_darwin_arm64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy macOS arm64 download command">Copy</button></div>
           </li>
           <li>
             <h4>Extract</h4>
             <p>Unpack the archive. It contains <code>cloudripper</code>, <code>LICENSE</code>, <code>README.md</code>, and <code>CHANGELOG.md</code>.</p>
-            <div class="cmdrow"><code>tar xzf cloudripper_0.2.0_darwin_arm64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy macOS arm64 extract command">Copy</button></div>
+            <div class="cmdrow"><code>tar xzf cloudripper_0.3.0_darwin_arm64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy macOS arm64 extract command">Copy</button></div>
           </li>
           <li>
             <h4>Allow the unsigned binary</h4>
@@ -307,13 +313,13 @@ body.is-phone .phone-note{display:block}
         <ol class="walk">
           <li>
             <h4>Download</h4>
-            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_darwin_amd64.tar.gz">Download cloudripper_0.2.0_darwin_amd64.tar.gz</a></p>
-            <div class="cmdrow"><code>curl -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_darwin_amd64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy macOS amd64 download command">Copy</button></div>
+            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper_0.3.0_darwin_amd64.tar.gz">Download cloudripper_0.3.0_darwin_amd64.tar.gz</a></p>
+            <div class="cmdrow"><code>curl -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper_0.3.0_darwin_amd64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy macOS amd64 download command">Copy</button></div>
           </li>
           <li>
             <h4>Extract</h4>
             <p>Unpack the archive. It contains <code>cloudripper</code>, <code>LICENSE</code>, <code>README.md</code>, and <code>CHANGELOG.md</code>.</p>
-            <div class="cmdrow"><code>tar xzf cloudripper_0.2.0_darwin_amd64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy macOS amd64 extract command">Copy</button></div>
+            <div class="cmdrow"><code>tar xzf cloudripper_0.3.0_darwin_amd64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy macOS amd64 extract command">Copy</button></div>
           </li>
           <li>
             <h4>Allow the unsigned binary</h4>
@@ -333,7 +339,7 @@ body.is-phone .phone-note{display:block}
       </div>
     </div>
   <div role="tabpanel" class="os-panel" id="panel-linux" aria-labelledby="tab-linux">
-      <p class="panel-lead">Linux v0.2.0 tar.gz archives. SHA-256 checksums for the v0.2.0 archives are in <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/checksums.txt">checksums.txt</a>.</p>
+      <p class="panel-lead">Linux v0.3.0 tar.gz archives. SHA-256 checksums for the v0.3.0 CLI archives are in <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/checksums.txt">checksums.txt</a>.</p>
       <div class="arch-picker" role="radiogroup" aria-label="Linux CPU">
         <label><input type="radio" name="linux-arch" value="amd64"> amd64</label><label><input type="radio" name="linux-arch" value="arm64"> arm64</label>
         <p class="arch-help">amd64 is Intel or AMD. arm64 is ARM.</p>
@@ -343,13 +349,13 @@ body.is-phone .phone-note{display:block}
         <ol class="walk">
           <li>
             <h4>Download</h4>
-            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_linux_amd64.tar.gz">Download cloudripper_0.2.0_linux_amd64.tar.gz</a></p>
-            <div class="cmdrow"><code>curl -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_linux_amd64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy Linux amd64 download command">Copy</button></div>
+            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper_0.3.0_linux_amd64.tar.gz">Download cloudripper_0.3.0_linux_amd64.tar.gz</a></p>
+            <div class="cmdrow"><code>curl -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper_0.3.0_linux_amd64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy Linux amd64 download command">Copy</button></div>
           </li>
           <li>
             <h4>Extract</h4>
             <p>Unpack the archive. It contains <code>cloudripper</code>, <code>LICENSE</code>, <code>README.md</code>, and <code>CHANGELOG.md</code>.</p>
-            <div class="cmdrow"><code>tar xzf cloudripper_0.2.0_linux_amd64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy Linux amd64 extract command">Copy</button></div>
+            <div class="cmdrow"><code>tar xzf cloudripper_0.3.0_linux_amd64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy Linux amd64 extract command">Copy</button></div>
           </li>
           <li>
             <h4>Allow the unsigned binary</h4>
@@ -372,13 +378,13 @@ body.is-phone .phone-note{display:block}
         <ol class="walk">
           <li>
             <h4>Download</h4>
-            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_linux_arm64.tar.gz">Download cloudripper_0.2.0_linux_arm64.tar.gz</a></p>
-            <div class="cmdrow"><code>curl -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/latest/download/cloudripper_0.2.0_linux_arm64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy Linux arm64 download command">Copy</button></div>
+            <p><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper_0.3.0_linux_arm64.tar.gz">Download cloudripper_0.3.0_linux_arm64.tar.gz</a></p>
+            <div class="cmdrow"><code>curl -LO https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper_0.3.0_linux_arm64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy Linux arm64 download command">Copy</button></div>
           </li>
           <li>
             <h4>Extract</h4>
             <p>Unpack the archive. It contains <code>cloudripper</code>, <code>LICENSE</code>, <code>README.md</code>, and <code>CHANGELOG.md</code>.</p>
-            <div class="cmdrow"><code>tar xzf cloudripper_0.2.0_linux_arm64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy Linux arm64 extract command">Copy</button></div>
+            <div class="cmdrow"><code>tar xzf cloudripper_0.3.0_linux_arm64.tar.gz</code><button type="button" class="copy-cmd" aria-label="Copy Linux arm64 extract command">Copy</button></div>
           </li>
           <li>
             <h4>Allow the unsigned binary</h4>
@@ -397,7 +403,30 @@ body.is-phone .phone-note{display:block}
         </ol>
       </div>
     </div>
-  <p class="desktop-soon">A desktop app is coming soon.</p>
+  <div class="desktop-app" id="desktop-app">
+    <h3>Desktop app</h3>
+    <p class="panel-lead">The v0.3.0 desktop app is read-only. It opens on the embedded fictional sample and can use local cloud credentials without sending them to us. SHA-256 checksums are in <a href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/desktop-checksums.txt">desktop-checksums.txt</a>.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>macOS</h3>
+        <p>Universal build, signed with a Developer ID Application certificate and notarized.</p>
+        <div class="row"><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper-desktop-macos.dmg">Download cloudripper-desktop-macos.dmg</a><a class="btn" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper-desktop-macos.zip">Download cloudripper-desktop-macos.zip</a></div>
+      </div>
+      <div class="card">
+        <h3>Windows</h3>
+        <p>The installers are unsigned. When SmartScreen appears, choose More info, then Run anyway.</p>
+        <div class="row"><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper-desktop-amd64-installer.exe">Download the amd64 installer</a><a class="btn" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper-desktop-arm64-installer.exe">Download the arm64 installer</a></div>
+      </div>
+      <div class="card">
+        <h3>Linux</h3>
+        <p>These packages are unsigned.</p>
+        <p class="arch-label">amd64</p>
+        <div class="row"><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper-desktop-x86_64.AppImage">Download the AppImage</a><a class="btn" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper-desktop_0.3.0_amd64.deb">Download the .deb</a><a class="btn" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper-desktop-0.3.0-1.x86_64.rpm">Download the .rpm</a></div>
+        <p class="arch-label">arm64</p>
+        <div class="row"><a class="btn primary" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper-desktop-aarch64.AppImage">Download the AppImage</a><a class="btn" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper-desktop_0.3.0_arm64.deb">Download the .deb</a><a class="btn" href="https://github.com/AndrewGrayYouNeeK/Cloudripper/releases/download/v0.3.0/cloudripper-desktop-0.3.0-1.aarch64.rpm">Download the .rpm</a></div>
+      </div>
+    </div>
+  </div>
   <h3 id="demo-term-title">What <code>cloudripper demo</code> prints</h3>
   <p class="sub">Fictional demo sample, captured from <code>cloudripper demo</code>. These resources, costs, and savings figures are made up. No credentials were used and no network calls were made.</p>
   <div class="term" aria-labelledby="demo-term-title">
