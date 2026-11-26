@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- CloudRipper Pro, stage 1, lives in `pro/` as its own Cloudflare Worker (`cloudripper-pro`). It is not deployed. It has email magic-link sign-in, multiple cloud accounts per user, report upload and history with D1 and R2, API tokens, a minimal dashboard, Stripe Checkout and Customer Portal with monthly and optional annual prices, and weekly email summaries through Cloudflare Email Sending.
+- `cloudripper upload` sends a scan report to a Pro server with an API token. It scans locally, or sends a saved `--output json` report with `--file`. `--every` repeats the scan and upload on this machine. Cloud credentials stay local.
 - The marketing site download walkthrough points at the pinned v0.3.0 CLI archives and desktop packages.
 
 ## [0.3.0] - 2026-11-21

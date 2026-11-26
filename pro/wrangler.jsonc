@@ -1,0 +1,34 @@
+{
+  // CloudRipper Pro. Separate from the public site Worker (`cloudripper-site`)
+  // and its WAITLIST KV. Not deployed yet: see README.md for the resources and
+  // secrets to create first. Placeholders below must be replaced before deploy.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cloudripper-pro",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-29",
+  "account_id": "d74b0de637f4d9d9eb3efb9e13142784",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cloudripper-pro",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [{ "binding": "REPORTS", "bucket_name": "cloudripper-pro-reports" }],
+  "send_email": [{ "name": "EMAIL" }],
+  // Weekly email summaries: Mondays 13:00 UTC.
+  "triggers": { "crons": ["0 13 * * 1"] },
+  "vars": {
+    // Public origin of this Worker, e.g. https://pro.example.com (no trailing path).
+    "APP_URL": "",
+    // Sender on a domain onboarded to Cloudflare Email Sending.
+    "EMAIL_FROM": "",
+    // Stripe Price IDs. Monthly is the $29/month price. Leave annual empty to hide it.
+    "STRIPE_PRICE_MONTHLY": "",
+    "STRIPE_PRICE_ANNUAL": ""
+  }
+  // Secrets (wrangler secret put): STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+}
