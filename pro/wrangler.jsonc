@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "cloudripper-pro",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "11cb0d66-4591-4513-8a63-5beed3c8c1a5",
       "migrations_dir": "migrations"
     }
   ],
