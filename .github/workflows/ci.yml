@@ -34,6 +34,14 @@ jobs:
       - name: Vet
         run: go vet ./...
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Desktop UI tests
+        working-directory: desktop/frontend
+        run: node --experimental-strip-types --test src/nousGate.test.ts
+
       - name: Clear spurious Vercel blocked-account status
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Nous, optional offline AI insights. `cloudripper nous savings`, `spikes` and `ask` explain cost spikes, suggest savings, and answer questions about the inventory using the Ollama model on this computer only (loopback addresses only, no proxies, no redirects). Nothing leaves the machine. It is off by default. Turning it on shows a warning and requires typing `I understand`: a modal with a text field in the desktop app (Confirm stays disabled until it matches), and a typed prompt in the CLI. `--i-understand` is the non-interactive form; the global `--yes` does not turn it on. `cloudripper nous disable` and the desktop switch turn it off. See docs/NOUS.md.
+
 - CloudRipper Pro, stage 1, lives in `pro/` as its own Cloudflare Worker (`cloudripper-pro`). It is not deployed. It has email magic-link sign-in, multiple cloud accounts per user, report upload and history with D1 and R2, API tokens, a minimal dashboard, Stripe Checkout and Customer Portal with monthly and optional annual prices, and weekly email summaries through Cloudflare Email Sending.
 - `cloudripper upload` sends a scan report to a Pro server with an API token. It scans locally, or sends a saved `--output json` report with `--file`. `--every` repeats the scan and upload on this machine. Cloud credentials stay local.
 - The marketing site download walkthrough points at the pinned v0.3.0 CLI archives and desktop packages.
