@@ -1,9 +1,9 @@
-// The warning window shown before Nous is turned on. DOM only, no Wails
+// The warning window shown before Henad is turned on. DOM only, no Wails
 // calls, so it can be previewed on its own. Confirm stays disabled until the
-// user types the phrase exactly (see nousGate.ts).
-import { confirmEnabled } from "./nousGate";
+// user types the phrase exactly (see henadGate.ts).
+import { confirmEnabled } from "./henadGate";
 
-export type NousWarning = {
+export type HenadWarning = {
     title: string;
     lines: string[];
     phrase: string;
@@ -11,7 +11,7 @@ export type NousWarning = {
 };
 
 /** Resolves with the typed phrase on Confirm, or null on Cancel / Escape. */
-export function openNousWarning(warning: NousWarning): Promise<string | null> {
+export function openHenadWarning(warning: HenadWarning): Promise<string | null> {
     return new Promise((resolve) => {
         const previous = document.activeElement as HTMLElement | null;
         const overlay = document.createElement("div");
@@ -20,8 +20,8 @@ export function openNousWarning(warning: NousWarning): Promise<string | null> {
         dialog.className = "modal";
         dialog.setAttribute("role", "alertdialog");
         dialog.setAttribute("aria-modal", "true");
-        dialog.setAttribute("aria-labelledby", "nous-warning-title");
-        dialog.setAttribute("aria-describedby", "nous-warning-body");
+        dialog.setAttribute("aria-labelledby", "henad-warning-title");
+        dialog.setAttribute("aria-describedby", "henad-warning-body");
 
         const head = document.createElement("div");
         head.className = "modal-head";
@@ -29,16 +29,16 @@ export function openNousWarning(warning: NousWarning): Promise<string | null> {
             const img = document.createElement("img");
             img.src = warning.markSrc;
             img.alt = "";
-            img.className = "nous-mark";
+            img.className = "henad-mark";
             head.append(img);
         }
         const title = document.createElement("h2");
-        title.id = "nous-warning-title";
+        title.id = "henad-warning-title";
         title.textContent = "⚠ " + warning.title;
         head.append(title);
 
         const body = document.createElement("ul");
-        body.id = "nous-warning-body";
+        body.id = "henad-warning-body";
         body.className = "modal-list";
         for (const line of warning.lines) {
             const li = document.createElement("li");
@@ -47,12 +47,12 @@ export function openNousWarning(warning: NousWarning): Promise<string | null> {
         }
 
         const label = document.createElement("label");
-        label.htmlFor = "nous-phrase";
+        label.htmlFor = "henad-phrase";
         label.className = "modal-label";
-        label.textContent = `Type "${warning.phrase}" to turn on Nous`;
+        label.textContent = `Type "${warning.phrase}" to turn on Henad`;
         const input = document.createElement("input");
         input.type = "text";
-        input.id = "nous-phrase";
+        input.id = "henad-phrase";
         input.autocomplete = "off";
         input.spellcheck = false;
         input.placeholder = warning.phrase;
@@ -65,7 +65,7 @@ export function openNousWarning(warning: NousWarning): Promise<string | null> {
         const confirm = document.createElement("button");
         confirm.type = "button";
         confirm.className = "primary";
-        confirm.id = "nous-confirm";
+        confirm.id = "henad-confirm";
         confirm.textContent = "Confirm";
         confirm.disabled = true;
         actions.append(cancel, confirm);

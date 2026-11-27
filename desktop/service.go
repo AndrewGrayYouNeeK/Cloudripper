@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/henad"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/notify"
-	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/nous"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/runtime"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
@@ -345,66 +345,66 @@ func watchStatePath() string {
 	return filepath.Join(dir, "desktop-watch.json")
 }
 
-// NousStatus reports whether Nous is on. Ollama is only contacted when it is.
-func (s *AppService) NousStatus(ctx context.Context) (nous.Status, error) {
-	path, err := nous.DefaultPath()
+// HenadStatus reports whether Henad is on. Ollama is only contacted when it is.
+func (s *AppService) HenadStatus(ctx context.Context) (henad.Status, error) {
+	path, err := henad.DefaultPath()
 	if err != nil {
-		return nous.Status{}, err
+		return henad.Status{}, err
 	}
-	return nous.CurrentStatus(ctx, path), nil
+	return henad.CurrentStatus(ctx, path), nil
 }
 
-// NousEnable turns Nous on. typed must be the confirmation phrase; it is
+// HenadEnable turns Henad on. typed must be the confirmation phrase; it is
 // checked here as well as in the window.
-func (s *AppService) NousEnable(ctx context.Context, typed string, model string) (nous.Status, error) {
-	path, err := nous.DefaultPath()
+func (s *AppService) HenadEnable(ctx context.Context, typed string, model string) (henad.Status, error) {
+	path, err := henad.DefaultPath()
 	if err != nil {
-		return nous.Status{}, err
+		return henad.Status{}, err
 	}
-	return nous.EnableTyped(ctx, path, typed, model)
+	return henad.EnableTyped(ctx, path, typed, model)
 }
 
-// NousDisable turns Nous off.
-func (s *AppService) NousDisable(ctx context.Context) (nous.Status, error) {
-	path, err := nous.DefaultPath()
+// HenadDisable turns Henad off.
+func (s *AppService) HenadDisable(ctx context.Context) (henad.Status, error) {
+	path, err := henad.DefaultPath()
 	if err != nil {
-		return nous.Status{}, err
+		return henad.Status{}, err
 	}
-	if err := nous.Disable(path); err != nil {
-		return nous.Status{}, err
+	if err := henad.Disable(path); err != nil {
+		return henad.Status{}, err
 	}
-	return nous.CurrentStatus(ctx, path), nil
+	return henad.CurrentStatus(ctx, path), nil
 }
 
-// NousAsk runs ask, savings, or spikes on local Ollama. live false uses
-// the fictional sample. It fails before reading anything when Nous is off.
-func (s *AppService) NousAsk(ctx context.Context, task string, question string, live bool, allRegions bool) (nous.Answer, error) {
-	path, err := nous.DefaultPath()
+// HenadAsk runs ask, savings, or spikes on local Ollama. live false uses
+// the fictional sample. It fails before reading anything when Henad is off.
+func (s *AppService) HenadAsk(ctx context.Context, task string, question string, live bool, allRegions bool) (henad.Answer, error) {
+	path, err := henad.DefaultPath()
 	if err != nil {
-		return nous.Answer{}, err
+		return henad.Answer{}, err
 	}
-	settings, err := nous.Load(path)
+	settings, err := henad.Load(path)
 	if err != nil {
-		return nous.Answer{}, err
+		return henad.Answer{}, err
 	}
 	if !settings.Enabled {
-		return nous.Answer{}, nous.ErrDisabled
+		return henad.Answer{}, henad.ErrDisabled
 	}
-	kind, err := nous.ParseTask(task)
+	kind, err := henad.ParseTask(task)
 	if err != nil {
-		return nous.Answer{}, err
+		return henad.Answer{}, err
 	}
 	var report runtime.Report
 	if live {
-		report, err = runtime.LiveReport(ctx, "nous", "Inventory and cost", allRegions, true)
+		report, err = runtime.LiveReport(ctx, "henad", "Inventory and cost", allRegions, true)
 	} else {
 		report, err = runtime.LoadDemoReport()
 	}
 	if err != nil {
-		return nous.Answer{}, err
+		return henad.Answer{}, err
 	}
-	samples, _ := nous.LoadSamples(watchStatePath())
-	return nous.Ask(ctx, nous.Request{
+	samples, _ := henad.LoadSamples(watchStatePath())
+	return henad.Ask(ctx, henad.Request{
 		Settings:  settings,
 		Task:      kind,
 		Question:  question,

@@ -1,4 +1,4 @@
-package nous
+package henad
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Status is what the desktop app shows on the Nous screen.
+// Status is what the desktop app shows on the Henad screen.
 type Status struct {
 	Enabled       bool     `json:"enabled"`
 	EnabledAt     string   `json:"enabled_at,omitempty"`
@@ -21,7 +21,7 @@ type Status struct {
 	Slogan        string   `json:"slogan"`
 }
 
-// CurrentStatus reads the opt-in and, only when Nous is on, asks local
+// CurrentStatus reads the opt-in and, only when Henad is on, asks local
 // Ollama which models are installed.
 func CurrentStatus(ctx context.Context, path string) Status {
 	st := Status{
@@ -40,7 +40,7 @@ func CurrentStatus(ctx context.Context, path string) Status {
 	st.Enabled = settings.Enabled
 	st.EnabledAt = settings.EnabledAt
 	if !settings.Enabled {
-		st.Message = "Nous is off. Nothing is read until you turn it on."
+		st.Message = "Henad is off. Nothing is read until you turn it on."
 		return st
 	}
 	client, err := NewClient(st.Endpoint)
@@ -62,12 +62,12 @@ func CurrentStatus(ctx context.Context, path string) Status {
 		st.Message = ErrNoModel.Error()
 		return st
 	}
-	st.Message = "Nous is on and uses " + st.Model + " on this computer. Nothing leaves this machine."
+	st.Message = "Henad is on and uses " + st.Model + " on this computer. Nothing leaves this machine."
 	return st
 }
 
 // EnableTyped is the desktop path: the typed text is checked here too, so a
-// UI bug cannot turn Nous on without the phrase.
+// UI bug cannot turn Henad on without the phrase.
 func EnableTyped(ctx context.Context, path, typed, model string) (Status, error) {
 	if _, err := Enable(path, typed, model, time.Now()); err != nil {
 		if errors.Is(err, ErrNotConfirmed) {
