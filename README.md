@@ -586,3 +586,5 @@ pulumi/               Sample Pulumi program
 ## License
 
 [MIT](LICENSE). Copyright 2026 Andrew Gray.
+
+YouNeeK™ · © 2026 Andrew Gray
