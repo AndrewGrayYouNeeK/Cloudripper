@@ -12,6 +12,7 @@ import (
 
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/config"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/notify"
+	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/nous"
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/runtime"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
@@ -342,4 +343,73 @@ func watchStatePath() string {
 	dir := filepath.Join(base, "cloudripper")
 	_ = os.MkdirAll(dir, 0o700)
 	return filepath.Join(dir, "desktop-watch.json")
+}
+
+// NousStatus reports whether Nous is on. Ollama is only contacted when it is.
+func (s *AppService) NousStatus(ctx context.Context) (nous.Status, error) {
+	path, err := nous.DefaultPath()
+	if err != nil {
+		return nous.Status{}, err
+	}
+	return nous.CurrentStatus(ctx, path), nil
+}
+
+// NousEnable turns Nous on. typed must be the confirmation phrase; it is
+// checked here as well as in the window.
+func (s *AppService) NousEnable(ctx context.Context, typed string, model string) (nous.Status, error) {
+	path, err := nous.DefaultPath()
+	if err != nil {
+		return nous.Status{}, err
+	}
+	return nous.EnableTyped(ctx, path, typed, model)
+}
+
+// NousDisable turns Nous off.
+func (s *AppService) NousDisable(ctx context.Context) (nous.Status, error) {
+	path, err := nous.DefaultPath()
+	if err != nil {
+		return nous.Status{}, err
+	}
+	if err := nous.Disable(path); err != nil {
+		return nous.Status{}, err
+	}
+	return nous.CurrentStatus(ctx, path), nil
+}
+
+// NousAsk runs ask, savings, or spikes on local Ollama. live false uses
+// the fictional sample. It fails before reading anything when Nous is off.
+func (s *AppService) NousAsk(ctx context.Context, task string, question string, live bool, allRegions bool) (nous.Answer, error) {
+	path, err := nous.DefaultPath()
+	if err != nil {
+		return nous.Answer{}, err
+	}
+	settings, err := nous.Load(path)
+	if err != nil {
+		return nous.Answer{}, err
+	}
+	if !settings.Enabled {
+		return nous.Answer{}, nous.ErrDisabled
+	}
+	kind, err := nous.ParseTask(task)
+	if err != nil {
+		return nous.Answer{}, err
+	}
+	var report runtime.Report
+	if live {
+		report, err = runtime.LiveReport(ctx, "nous", "Inventory and cost", allRegions, true)
+	} else {
+		report, err = runtime.LoadDemoReport()
+	}
+	if err != nil {
+		return nous.Answer{}, err
+	}
+	samples, _ := nous.LoadSamples(watchStatePath())
+	return nous.Ask(ctx, nous.Request{
+		Settings:  settings,
+		Task:      kind,
+		Question:  question,
+		Report:    report,
+		Samples:   samples,
+		Threshold: s.watch.State().ThresholdPercent,
+	})
 }
