@@ -1,4 +1,4 @@
-package nous
+package henad
 
 import (
 	"context"
@@ -31,7 +31,7 @@ func TestPhraseMatches(t *testing.T) {
 }
 
 func TestEnableNeedsPhraseAndPersists(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "sub", "nous.json")
+	path := filepath.Join(t.TempDir(), "sub", "henad.json")
 	s, err := Load(path)
 	if err != nil || s.Enabled {
 		t.Fatalf("default should be off, got %+v %v", s, err)
@@ -67,7 +67,7 @@ func TestEnableNeedsPhraseAndPersists(t *testing.T) {
 
 func TestWarningSaysWhatAndWhere(t *testing.T) {
 	text := strings.Join(WarningLines(), "\n")
-	for _, want := range []string{"turning on Nous", "Ollama", "localhost", "What it reads", "Nothing is sent off this machine", "turn it off"} {
+	for _, want := range []string{"turning on Henad", "Ollama", "localhost", "What it reads", "Nothing is sent off this machine", "turn it off"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("warning is missing %q", want)
 		}
@@ -147,7 +147,7 @@ func TestAskRefusesWhenOff(t *testing.T) {
 		t.Fatalf("err = %v, want ErrDisabled", err)
 	}
 	if len(seen) != 0 {
-		t.Fatalf("Ollama was called while Nous is off")
+		t.Fatalf("Ollama was called while Henad is off")
 	}
 }
 
@@ -242,7 +242,7 @@ func TestStatusAndEnableTyped(t *testing.T) {
 	var seen []map[string]any
 	srv := fakeOllama(t, []string{"llama3.2:latest"}, &seen)
 	t.Setenv(EnvEndpoint, srv.URL)
-	path := filepath.Join(t.TempDir(), "nous.json")
+	path := filepath.Join(t.TempDir(), "henad.json")
 	st := CurrentStatus(context.Background(), path)
 	if st.Enabled || st.OllamaRunning || st.Phrase != ConfirmPhrase || len(st.Warning) == 0 {
 		t.Fatalf("off status = %+v", st)
@@ -253,5 +253,32 @@ func TestStatusAndEnableTyped(t *testing.T) {
 	st, err := EnableTyped(context.Background(), path, "I understand", "")
 	if err != nil || !st.Enabled || !st.OllamaRunning || st.Model != "llama3.2:latest" {
 		t.Fatalf("on status = %+v %v", st, err)
+	}
+}
+
+func TestSettingsPathKeepsPreRenameFile(t *testing.T) {
+	dir := t.TempDir()
+	if got := settingsPathIn(dir); got != filepath.Join(dir, "henad.json") {
+		t.Fatalf("fresh install: got %s", got)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "nous.json"), []byte(`{}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got := settingsPathIn(dir); got != filepath.Join(dir, "nous.json") {
+		t.Fatalf("pre-rename file: got %s", got)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "henad.json"), []byte(`{}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got := settingsPathIn(dir); got != filepath.Join(dir, "henad.json") {
+		t.Fatalf("both files: got %s", got)
+	}
+}
+
+func TestEndpointReadsPreRenameVariable(t *testing.T) {
+	t.Setenv("CLOUDRIPPER_HENAD_OLLAMA", "")
+	t.Setenv("CLOUDRIPPER_NOUS_OLLAMA", "http://127.0.0.1:9999")
+	if got := Endpoint(); got != "http://127.0.0.1:9999" {
+		t.Fatalf("got %s", got)
 	}
 }

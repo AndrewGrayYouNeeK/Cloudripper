@@ -1,15 +1,15 @@
-// Package nous adds optional, offline AI insights to CloudRipper.
+// Package henad adds optional, offline AI insights to CloudRipper.
 //
-// Nous explains cost spikes, suggests savings, and answers questions about a
+// Henad explains cost spikes, suggests savings, and answers questions about a
 // CloudRipper report. It runs only on the Ollama model on this computer
 // (http://localhost:11434). The client refuses any endpoint that is not a
 // loopback address, ignores HTTP proxies, and does not follow redirects, so
 // report data cannot leave the machine through it.
 //
-// Nous is off by default. Turning it on requires the user to type the
+// Henad is off by default. Turning it on requires the user to type the
 // confirmation phrase "I understand" after reading the warning (WarningLines).
 // The opt-in is stored in a small JSON file and can be turned off at any time.
-package nous
+package henad
 
 import (
 	"bytes"
@@ -27,28 +27,36 @@ import (
 	"time"
 )
 
-// ConfirmPhrase is what the user must type to turn Nous on.
+// ConfirmPhrase is what the user must type to turn Henad on.
 const ConfirmPhrase = "I understand"
 
 // DefaultEndpoint is local Ollama.
 const DefaultEndpoint = "http://localhost:11434"
 
 // EnvConfig overrides the settings file path.
-const EnvConfig = "CLOUDRIPPER_NOUS_CONFIG"
+const EnvConfig = "CLOUDRIPPER_HENAD_CONFIG"
 
 // EnvEndpoint overrides the Ollama URL. It must still be a loopback address.
-const EnvEndpoint = "CLOUDRIPPER_NOUS_OLLAMA"
+const EnvEndpoint = "CLOUDRIPPER_HENAD_OLLAMA"
 
-// Slogan is the Nous tagline.
+// Henad was called Nous until Nov 2026. The old variable names and settings
+// file are still honored so nobody has to turn it on again.
+const (
+	legacyEnvConfig    = "CLOUDRIPPER_NOUS_CONFIG"
+	legacyEnvEndpoint  = "CLOUDRIPPER_NOUS_OLLAMA"
+	legacySettingsFile = "nous.json"
+)
+
+// Slogan is the Henad tagline.
 const Slogan = "The architecture of understanding."
 
 var (
 	// ErrNotConfirmed means the confirmation phrase did not match.
-	ErrNotConfirmed = errors.New(`Nous was not turned on: type "I understand" to confirm`)
-	// ErrDisabled means Nous is off.
-	ErrDisabled = errors.New(`Nous is off. Turn it on with "cloudripper nous enable" (or the Nous switch in the desktop app)`)
+	ErrNotConfirmed = errors.New(`Henad was not turned on: type "I understand" to confirm`)
+	// ErrDisabled means Henad is off.
+	ErrDisabled = errors.New(`Henad is off. Turn it on with "cloudripper henad enable" (or the Henad switch in the desktop app)`)
 	// ErrNotLocal means the endpoint is not on this machine.
-	ErrNotLocal = errors.New("Nous only talks to Ollama on this computer (localhost, 127.0.0.1 or ::1)")
+	ErrNotLocal = errors.New("Henad only talks to Ollama on this computer (localhost, 127.0.0.1 or ::1)")
 	// ErrOllamaDown means nothing answered at the Ollama endpoint.
 	ErrOllamaDown = errors.New("Ollama is not running on this computer. Start the Ollama app (or run `ollama serve`), then try again")
 	// ErrNoModel means Ollama answered but has no chat model.
@@ -62,17 +70,17 @@ func PhraseMatches(s string) bool {
 }
 
 // WarningTitle heads the warning window and the CLI prompt.
-const WarningTitle = "Turn on Nous?"
+const WarningTitle = "Turn on Henad?"
 
-// WarningLines is the text shown before Nous is turned on, in the desktop
+// WarningLines is the text shown before Henad is turned on, in the desktop
 // modal and in the CLI.
 func WarningLines() []string {
 	return []string{
-		"You're turning on Nous, an AI assistant that explains cost spikes, suggests savings, and answers questions about your cloud inventory.",
-		"Nous uses the Ollama model on this computer (" + DefaultEndpoint + "). CloudRipper only talks to Ollama on localhost; it never calls a cloud AI service.",
+		"You're turning on Henad, an AI assistant that explains cost spikes, suggests savings, and answers questions about your cloud inventory.",
+		"Henad uses the Ollama model on this computer (" + DefaultEndpoint + "). CloudRipper only talks to Ollama on localhost; it never calls a cloud AI service.",
 		"What it reads: the CloudRipper report you ask about (resource names, IDs, types, regions, status, sizes, estimated and actual costs, and savings recommendations) and recent cost-watch samples. It does not read your cloud credentials.",
 		"Nothing is sent off this machine. No CloudRipper server, no third party, no telemetry.",
-		`You can turn it off at any time: "cloudripper nous disable", or the Nous switch in the desktop app.`,
+		`You can turn it off at any time: "cloudripper henad disable", or the Henad switch in the desktop app.`,
 	}
 }
 
@@ -83,19 +91,35 @@ type Settings struct {
 	EnabledAt string `json:"enabled_at,omitempty"`
 }
 
-// DefaultPath is <user config dir>/cloudripper/nous.json, or $CLOUDRIPPER_NOUS_CONFIG.
+// DefaultPath is <user config dir>/cloudripper/henad.json, or $CLOUDRIPPER_HENAD_CONFIG
+// ($CLOUDRIPPER_NOUS_CONFIG still works). If only the pre-rename nous.json
+// exists, that file keeps being used.
 func DefaultPath() (string, error) {
-	if p := strings.TrimSpace(os.Getenv(EnvConfig)); p != "" {
-		return p, nil
+	for _, name := range []string{EnvConfig, legacyEnvConfig} {
+		if p := strings.TrimSpace(os.Getenv(name)); p != "" {
+			return p, nil
+		}
 	}
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return "", fmt.Errorf("find config folder: %w", err)
 	}
-	return filepath.Join(dir, "cloudripper", "nous.json"), nil
+	return settingsPathIn(filepath.Join(dir, "cloudripper")), nil
 }
 
-// Load reads the settings. A missing file means Nous is off.
+func settingsPathIn(dir string) string {
+	current := filepath.Join(dir, "henad.json")
+	if _, err := os.Stat(current); err == nil {
+		return current
+	}
+	legacy := filepath.Join(dir, legacySettingsFile)
+	if _, err := os.Stat(legacy); err == nil {
+		return legacy
+	}
+	return current
+}
+
+// Load reads the settings. A missing file means Henad is off.
 func Load(path string) (Settings, error) {
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -127,7 +151,7 @@ func Save(path string, s Settings) error {
 	return os.Rename(tmp, path)
 }
 
-// Enable turns Nous on only when phrase matches ConfirmPhrase.
+// Enable turns Henad on only when phrase matches ConfirmPhrase.
 func Enable(path, phrase, model string, now time.Time) (Settings, error) {
 	if !PhraseMatches(phrase) {
 		return Settings{}, ErrNotConfirmed
@@ -139,7 +163,7 @@ func Enable(path, phrase, model string, now time.Time) (Settings, error) {
 	return s, nil
 }
 
-// Disable turns Nous off and keeps the chosen model.
+// Disable turns Henad off and keeps the chosen model.
 func Disable(path string) error {
 	s, err := Load(path)
 	if err != nil {
@@ -150,10 +174,12 @@ func Disable(path string) error {
 	return Save(path, s)
 }
 
-// Endpoint is $CLOUDRIPPER_NOUS_OLLAMA or DefaultEndpoint.
+// Endpoint is $CLOUDRIPPER_HENAD_OLLAMA ($CLOUDRIPPER_NOUS_OLLAMA still works) or DefaultEndpoint.
 func Endpoint() string {
-	if v := strings.TrimSpace(os.Getenv(EnvEndpoint)); v != "" {
-		return v
+	for _, name := range []string{EnvEndpoint, legacyEnvEndpoint} {
+		if v := strings.TrimSpace(os.Getenv(name)); v != "" {
+			return v
+		}
 	}
 	return DefaultEndpoint
 }
@@ -203,7 +229,7 @@ func NewClient(endpoint string) (*Client, error) {
 			Transport: transport,
 			Timeout:   6 * time.Minute,
 			CheckRedirect: func(*http.Request, []*http.Request) error {
-				return errors.New("Nous does not follow redirects")
+				return errors.New("Henad does not follow redirects")
 			},
 		},
 	}, nil

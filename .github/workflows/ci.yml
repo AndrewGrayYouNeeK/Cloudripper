@@ -40,7 +40,7 @@ jobs:
 
       - name: Desktop UI tests
         working-directory: desktop/frontend
-        run: node --experimental-strip-types --test src/nousGate.test.ts
+        run: node --experimental-strip-types --test src/henadGate.test.ts
 
       - name: Clear spurious Vercel blocked-account status
         if: github.event_name == 'pull_request'

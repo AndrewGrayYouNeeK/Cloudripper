@@ -1,12 +1,12 @@
-// The typed confirmation that turns Nous on. Kept free of DOM and Wails
+// The typed confirmation that turns Henad on. Kept free of DOM and Wails
 // imports so `npm test` can run it in Node. The Go side checks the same
-// phrase again (internal/nous.PhraseMatches).
+// phrase again (internal/henad.PhraseMatches).
 
-export const NOUS_PHRASE = "I understand";
+export const HENAD_PHRASE = "I understand";
 
 /** True when text is "I understand", ignoring case and surrounding spaces. */
 export function phraseMatches(text: string): boolean {
-    return text.trim().toLowerCase() === NOUS_PHRASE.toLowerCase();
+    return text.trim().toLowerCase() === HENAD_PHRASE.toLowerCase();
 }
 
 /** Whether the modal's Confirm button may be pressed. */

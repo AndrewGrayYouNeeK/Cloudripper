@@ -1,4 +1,4 @@
-package nous
+package henad
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/AndrewGrayYouNeeK/Cloudripper/internal/watch"
 )
 
-// Task is what the user asked Nous to do.
+// Task is what the user asked Henad to do.
 type Task string
 
 const (
@@ -34,14 +34,14 @@ func ParseTask(s string) (Task, error) {
 	case "spikes", "spike":
 		return TaskSpikes, nil
 	}
-	return "", fmt.Errorf("unknown Nous task %q (ask, savings, or spikes)", s)
+	return "", fmt.Errorf("unknown Henad task %q (ask, savings, or spikes)", s)
 }
 
 // maxResources keeps the prompt small enough for small local models.
 const maxResources = 40
 
 // BuildContext turns a report and recent cost-watch samples into the text
-// the local model reads. This is everything Nous reads.
+// the local model reads. This is everything Henad reads.
 func BuildContext(r appruntime.Report, samples []watch.Snapshot, threshold float64) string {
 	var b strings.Builder
 	title := r.Title
@@ -135,7 +135,7 @@ func cost(r appruntime.ResourceView) float64 {
 
 // SystemPrompt tells the local model what it is and how to answer.
 func SystemPrompt(task Task) string {
-	base := `You are Nous ("` + Slogan + `"), the offline assistant inside CloudRipper, a local cloud inventory and cost tool. You run on the user's own computer through Ollama; nothing leaves the machine.
+	base := `You are Henad ("` + Slogan + `"), the offline assistant inside CloudRipper, a local cloud inventory and cost tool. You run on the user's own computer through Ollama; nothing leaves the machine.
 Use only the report below. Name the specific resources and dollar amounts. If the report does not contain the answer, say so. Keep it short: a few sentences or a short list. Never tell the user to run destructive commands; CloudRipper's own "optimize --apply" asks for confirmation.`
 	switch task {
 	case TaskSavings:
@@ -162,7 +162,7 @@ func Question(task Task, question string) string {
 	return q
 }
 
-// Request is one Nous call.
+// Request is one Henad call.
 type Request struct {
 	Settings  Settings
 	Endpoint  string
@@ -174,7 +174,7 @@ type Request struct {
 	Threshold float64
 }
 
-// Answer is what Nous said and which local model said it.
+// Answer is what Henad said and which local model said it.
 type Answer struct {
 	Text  string `json:"text"`
 	Model string `json:"model"`
@@ -182,7 +182,7 @@ type Answer struct {
 	Local bool   `json:"local"`
 }
 
-// Ask runs a task on local Ollama. It fails with ErrDisabled when Nous is
+// Ask runs a task on local Ollama. It fails with ErrDisabled when Henad is
 // off, before any data is read or sent anywhere.
 func Ask(ctx context.Context, req Request) (Answer, error) {
 	if !req.Settings.Enabled {
@@ -190,7 +190,7 @@ func Ask(ctx context.Context, req Request) (Answer, error) {
 	}
 	q := Question(req.Task, req.Question)
 	if q == "" {
-		return Answer{}, fmt.Errorf("ask Nous a question")
+		return Answer{}, fmt.Errorf("ask Henad a question")
 	}
 	endpoint := req.Endpoint
 	if endpoint == "" {

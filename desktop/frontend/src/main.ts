@@ -8,13 +8,13 @@ import type {
     WatchState,
 } from "../bindings/github.com/AndrewGrayYouNeeK/Cloudripper/internal/runtime/models";
 import type {
-    Answer as NousAnswer,
-    Status as NousStatus,
-} from "../bindings/github.com/AndrewGrayYouNeeK/Cloudripper/internal/nous/models";
-import { openNousWarning } from "./nousModal";
-import nousMark from "./assets/nous-mark.jpg";
+    Answer as HenadAnswer,
+    Status as HenadStatus,
+} from "../bindings/github.com/AndrewGrayYouNeeK/Cloudripper/internal/henad/models";
+import { openHenadWarning } from "./henadModal";
+import henadMark from "./assets/henad-mark.jpg";
 
-type Screen = "demo" | "providers" | "inventory" | "spend" | "recommendations" | "bills" | "watch" | "nous" | "later";
+type Screen = "demo" | "providers" | "inventory" | "spend" | "recommendations" | "bills" | "watch" | "henad" | "later";
 
 const panel = document.querySelector("#panel") as HTMLElement;
 const statusLine = document.querySelector("#status") as HTMLElement;
@@ -270,44 +270,44 @@ function renderWatch(state: WatchState): void {
     }
 }
 
-let nousAnswer: NousAnswer | null = null;
-let nousQuestion = "";
+let henadAnswer: HenadAnswer | null = null;
+let henadQuestion = "";
 
-function renderNous(status: NousStatus): void {
+function renderHenad(status: HenadStatus): void {
     clear(panel);
-    const head = el("div", undefined, "nous-head");
-    const mark = el("img", undefined, "nous-mark");
-    mark.src = nousMark;
-    mark.alt = "Nous";
+    const head = el("div", undefined, "henad-head");
+    const mark = el("img", undefined, "henad-mark");
+    mark.src = henadMark;
+    mark.alt = "Henad";
     const titles = el("div");
-    titles.append(el("h1", "Nous"), el("p", status.slogan, "note"));
+    titles.append(el("h1", "Henad"), el("p", status.slogan, "note"));
     head.append(mark, titles);
     panel.append(head);
 
     const switchBox = document.createElement("input");
     switchBox.type = "checkbox";
-    switchBox.id = "nous-switch";
+    switchBox.id = "henad-switch";
     switchBox.setAttribute("role", "switch");
     switchBox.checked = status.enabled;
     switchBox.setAttribute("aria-checked", status.enabled ? "true" : "false");
-    const switchLabel = el("label", status.enabled ? "Nous is on" : "Nous is off");
-    switchLabel.className = "check nous-switch";
+    const switchLabel = el("label", status.enabled ? "Henad is on" : "Henad is off");
+    switchLabel.className = "check henad-switch";
     switchLabel.htmlFor = switchBox.id;
     switchLabel.prepend(switchBox);
     switchBox.addEventListener("change", () => {
         if (switchBox.checked) {
             // Stay off until the warning is confirmed.
             switchBox.checked = false;
-            void turnNousOn(status);
+            void turnHenadOn(status);
         } else {
-            void turnNousOff();
+            void turnHenadOff();
         }
     });
     panel.append(switchLabel);
     panel.append(el("p", status.message, "note"));
 
     if (!status.enabled) {
-        panel.append(el("h2", "What Nous does"));
+        panel.append(el("h2", "What Henad does"));
         panel.append(list([
             "Explains cost spikes from your Watch samples.",
             "Suggests where to save, using CloudRipper's own recommendations.",
@@ -317,41 +317,41 @@ function renderNous(status: NousStatus): void {
         return;
     }
 
-    const bar = toolbar("nous", true, false);
+    const bar = toolbar("henad", true, false);
     bar.append(
-        button("Explain cost spikes", () => void askNous("spikes", "")),
-        button("Suggest savings", () => void askNous("savings", ""), true),
+        button("Explain cost spikes", () => void askHenad("spikes", "")),
+        button("Suggest savings", () => void askHenad("savings", ""), true),
     );
     panel.append(bar);
 
     const askRow = el("div", undefined, "toolbar");
     const input = document.createElement("input");
     input.type = "text";
-    input.id = "nous-question";
-    input.className = "nous-question";
+    input.id = "henad-question";
+    input.className = "henad-question";
     input.placeholder = "Ask about your inventory, e.g. Which resources cost the most?";
-    input.value = nousQuestion;
+    input.value = henadQuestion;
     input.addEventListener("input", () => {
-        nousQuestion = input.value;
+        henadQuestion = input.value;
     });
     input.addEventListener("keydown", (event) => {
         if (event.key === "Enter" && input.value.trim()) {
-            void askNous("ask", input.value);
+            void askHenad("ask", input.value);
         }
     });
     const inputLabel = el("label", "Question");
     inputLabel.htmlFor = input.id;
-    askRow.append(inputLabel, input, button("Ask Nous", () => {
+    askRow.append(inputLabel, input, button("Ask Henad", () => {
         if (input.value.trim()) {
-            void askNous("ask", input.value);
+            void askHenad("ask", input.value);
         }
     }));
     panel.append(askRow);
 
-    if (nousAnswer) {
-        const card = el("article", undefined, "card nous-answer");
-        card.append(el("h3", "Nous (offline · " + nousAnswer.model + ")"));
-        for (const para of nousAnswer.text.split(/\n{2,}/)) {
+    if (henadAnswer) {
+        const card = el("article", undefined, "card henad-answer");
+        card.append(el("h3", "Henad (offline · " + henadAnswer.model + ")"));
+        for (const para of henadAnswer.text.split(/\n{2,}/)) {
             card.append(el("p", para));
         }
         if (!live) {
@@ -361,45 +361,45 @@ function renderNous(status: NousStatus): void {
     }
 }
 
-async function turnNousOn(status: NousStatus): Promise<void> {
-    const typed = await openNousWarning({
+async function turnHenadOn(status: HenadStatus): Promise<void> {
+    const typed = await openHenadWarning({
         title: status.warning_title,
         lines: status.warning ?? [],
         phrase: status.phrase,
-        markSrc: nousMark,
+        markSrc: henadMark,
     });
     if (typed === null) {
-        setStatus("Cancelled. Nous stays off.");
+        setStatus("Cancelled. Henad stays off.");
         return;
     }
     try {
-        renderNous(await AppService.NousEnable(typed, ""));
-        setStatus("Nous is on. It uses local Ollama only.");
+        renderHenad(await AppService.HenadEnable(typed, ""));
+        setStatus("Henad is on. It uses local Ollama only.");
     } catch (err) {
-        renderNous(await AppService.NousStatus());
+        renderHenad(await AppService.HenadStatus());
         setStatus(errorText(err));
     }
 }
 
-async function turnNousOff(): Promise<void> {
+async function turnHenadOff(): Promise<void> {
     try {
-        nousAnswer = null;
-        renderNous(await AppService.NousDisable());
-        setStatus("Nous is off.");
+        henadAnswer = null;
+        renderHenad(await AppService.HenadDisable());
+        setStatus("Henad is off.");
     } catch (err) {
         setStatus(errorText(err));
     }
 }
 
-async function askNous(task: "ask" | "savings" | "spikes", question: string): Promise<void> {
+async function askHenad(task: "ask" | "savings" | "spikes", question: string): Promise<void> {
     if (busy) {
         return;
     }
     busy = true;
-    setStatus("Nous is thinking on this computer…");
+    setStatus("Henad is thinking on this computer…");
     try {
-        nousAnswer = await AppService.NousAsk(task, question, live, allRegions);
-        renderNous(await AppService.NousStatus());
+        henadAnswer = await AppService.HenadAsk(task, question, live, allRegions);
+        renderHenad(await AppService.HenadStatus());
         setStatus("Answered by local Ollama. Nothing left this machine.");
     } catch (err) {
         setStatus(errorText(err));
@@ -491,9 +491,9 @@ async function showScreen(next: Screen): Promise<void> {
             setStatus(live ? (csvPath ? "Using the selected CSV." : "Using configured mail, if any.") : "Embedded fictional card export.");
             return;
         }
-        if (next === "nous") {
-            renderNous(await AppService.NousStatus());
-            setStatus("Nous runs on local Ollama only. Nothing leaves this machine.");
+        if (next === "henad") {
+            renderHenad(await AppService.HenadStatus());
+            setStatus("Henad runs on local Ollama only. Nothing leaves this machine.");
             return;
         }
         if (next === "watch") {
@@ -591,7 +591,7 @@ themeButton.addEventListener("click", () => {
     applyTheme(next);
 });
 
-const screenOrder: Screen[] = ["demo", "providers", "inventory", "spend", "recommendations", "bills", "watch", "nous", "later"];
+const screenOrder: Screen[] = ["demo", "providers", "inventory", "spend", "recommendations", "bills", "watch", "henad", "later"];
 
 for (const node of document.querySelectorAll<HTMLButtonElement>("[data-screen]")) {
     node.addEventListener("click", () => {

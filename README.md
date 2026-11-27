@@ -44,9 +44,9 @@ cloudripper optimize            # recommendations only; nothing changes without 
 # 5. Hunt for bills you forgot about (no cloud credentials needed)
 cloudripper find-bills --sample
 cloudripper find-bills --csv card-export.csv
-cloudripper nous enable      # optional offline AI; type "I understand" to confirm
-cloudripper nous savings
-cloudripper nous disable
+cloudripper henad enable      # optional offline AI; type "I understand" to confirm
+cloudripper henad savings
+cloudripper henad disable
 ```
 
 `cost` and `rip` use AWS Cost Explorer for actual spend. Enable it first in the Billing console; data can take about 24 hours to appear. For GCP, set `GCP_PROJECT`; for Azure, set `AZURE_SUBSCRIPTION_ID`; for Cloudflare, set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. See [Configuration](#configuration).
@@ -59,7 +59,7 @@ cloudripper nous disable
 - **Forgotten bills.** `find-bills` reads billing mail (IMAP or Gmail, read-only) and a card CSV for AWS, Google Cloud, Azure, DigitalOcean, Linode/Akamai, Vercel, Netlify, Heroku, Cloudflare, Supabase, Firebase, MongoDB Atlas, and OpenAI, and flags the ones you have not set up.
 - **Scheduling, scaling, and cost alerts.** `schedule`, `scale`, and `watch` stop idle compute on a schedule, scale groups from CPU, and alert Slack or email on spend spikes.
 - **Bounded chaos tests.** `chaos` runs Chaos Mesh or Gremlin experiments inside a blast-radius limit, and refuses production-looking targets without `--allow-prod`.
-- **Nous, offline AI insights (optional, off by default).** `cloudripper nous` explains cost spikes, suggests savings, and answers questions about your inventory using the Ollama model on your own computer. Nothing leaves the machine. Turning it on shows a warning and needs `I understand` typed out. See [docs/NOUS.md](docs/NOUS.md).
+- **Henad, offline AI insights (optional, off by default).** `cloudripper henad` explains cost spikes, suggests savings, and answers questions about your inventory using the Ollama model on your own computer. Nothing leaves the machine. Turning it on shows a warning and needs `I understand` typed out. See [docs/HENAD.md](docs/HENAD.md).
 - **Output you can script.** `--output table|json|csv|html` on every command that prints rows. HTML is one self-contained file: no external assets, values are escaped, unpriced costs are `n/a`, and missing actuals are `unavailable` rather than `$0`.
 
 ## Free and paid
@@ -472,7 +472,7 @@ What this version does:
 - Shows read-only inventory (`rip`), cost, optimizer recommendations, and find-bills, including the embedded card sample.
 - Exports HTML, CSV, and JSON through the same `internal/output` writers as the CLI.
 - Runs `watch` alerts through the existing Slack and email notifiers, and also posts an operating-system notification. Watch does not enforce schedules.
-- Has an optional **Nous** screen for offline AI insights on the local Ollama model. It is off until you flip its switch, read the warning window, and type `I understand`. Nothing is sent off the machine. See [docs/NOUS.md](docs/NOUS.md).
+- Has an optional **Henad** screen for offline AI insights on the local Ollama model. It is off until you flip its switch, read the warning window, and type `I understand`. Nothing is sent off the machine. See [docs/HENAD.md](docs/HENAD.md).
 
 Cloud inventory and spend stay on this machine. The app calls the cloud providers' own APIs when you run a live scan or watch sample. It calls Slack or SMTP only if you start watch and those variables are set. There is no hosted CloudRipper backend.
 
@@ -547,7 +547,7 @@ go test -race -cover ./...
 go vet ./...
 ```
 
-Unit tests use interfaces and fakes. They do not call AWS, GCP, or Azure. Nous tests use a fake Ollama on `127.0.0.1`.
+Unit tests use interfaces and fakes. They do not call AWS, GCP, or Azure. Henad tests use a fake Ollama on `127.0.0.1`.
 
 The desktop UI's confirmation-phrase check has its own test: `cd desktop/frontend && npm test` (Node 22.6 or newer).
 
